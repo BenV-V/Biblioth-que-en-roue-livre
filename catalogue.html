@@ -5,30 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Bibliothèque</title>
 
-  <!-- Ton CSS -->
   <link rel="stylesheet" href="styles.css?v=3" />
-
-  <!-- Mini style pour le lazyload (tu peux le garder) -->
   <style>
     .lazyload { min-height: 100px; background: #ffffff; }
   </style>
-
-  <!-- =========================================
-       ✅ ICI: garde ton GROS script actuel
-       (celui qui contient toggleDetails, rechercherTitre,
-        loadNextChunk, initLazyLoad, createRow, etc.)
-       Copie/colle le <script> ... </script> du haut de ton ancien fichier.
-       ========================================= -->
-  <!--
-  <script>
-    ... TON GROS SCRIPT EXISTANT (inchangé) ...
-  </script>
-  -->
 </head>
 
 <body>
   <div class="page-wrap" id="top">
-    <!-- HERO -->
+
     <section class="hero">
       <div class="hero-inner">
         <h1>Parcourez la bibliothèque En Roue Livre !</h1>
@@ -36,59 +21,24 @@
       </div>
     </section>
 
-    <!-- CARTE RECHERCHE -->
     <section class="search-card" aria-label="Recherche">
       <div class="search-grid">
-        <input
-          type="search"
-          id="searchInput"
-          placeholder="Rechercher par Titre..."
-        />
-        <button
-          id="searchButton"
-          class="btn1"
-          onclick="rechercherTitre()"
-          style="width:50px;"
-          aria-label="Rechercher par titre"
-        >
+        <input type="search" id="searchInput" placeholder="Rechercher par Titre..." />
+        <button id="searchButton" class="btn1" onclick="rechercherTitre()" style="width:50px;" aria-label="Rechercher par titre">
           <span style="font-size:14px;">&#128269;</span>
         </button>
       </div>
 
       <div class="search-grid">
-        <input
-          type="search"
-          id="searchInputAuteur"
-          title="Séparer les différents auteurs par un espace"
-          placeholder="Rechercher par Auteur..."
-        />
-        <button
-          id="searchButtonAuteur"
-          class="btn1"
-          onclick="rechercherAuteur()"
-          style="width:50px;"
-          title="Séparer les différents auteurs par un espace"
-          aria-label="Rechercher par auteur"
-        >
+        <input type="search" id="searchInputAuteur" title="Séparer les différents auteurs par un espace" placeholder="Rechercher par Auteur..." />
+        <button id="searchButtonAuteur" class="btn1" onclick="rechercherAuteur()" style="width:50px;" aria-label="Rechercher par auteur">
           <span style="font-size:14px;">&#128269;</span>
         </button>
       </div>
 
       <div class="search-grid">
-        <input
-          type="search"
-          id="searchInputGenre"
-          title="Séparer les genres par un espace"
-          placeholder="Rechercher par Genre..."
-        />
-        <button
-          id="searchButtonGenre"
-          class="btn1"
-          onclick="rechercherGenre()"
-          style="width:50px;"
-          title="Séparer les genres par un espace"
-          aria-label="Rechercher par genre"
-        >
+        <input type="search" id="searchInputGenre" title="Séparer les genres par un espace" placeholder="Rechercher par Genre..." />
+        <button id="searchButtonGenre" class="btn1" onclick="rechercherGenre()" style="width:50px;" aria-label="Rechercher par genre">
           <span style="font-size:14px;">&#128269;</span>
         </button>
       </div>
@@ -98,7 +48,6 @@
       </div>
     </section>
 
-    <!-- TABLE -->
     <table id="tableLivres" border="1" aria-label="Catalogue">
       <tr>
         <td>Couverture</td>
@@ -112,60 +61,48 @@
 
     <div id="nombreTitres">Nombre de titres : 0</div>
 
-    <button
-      id="showAllButton"
-      onclick="afficherTout()"
-      class="btn1"
-      style="display:none;width:160px;"
-    >
+    <button id="showAllButton" onclick="afficherTout()" class="btn1" style="display:none;width:160px;">
       Afficher tout
     </button>
 
     <div style="margin-top:10px; text-align:center;">
       <span class="hero-sub">
         Catalogue généré avec
-        <a href="https://www.soft-creation.fr/MesLivresPro.html" target="_blank" class="linksite">
-          Mes Livres Pro
-        </a>
+        <a href="https://www.soft-creation.fr/MesLivresPro.html" target="_blank" class="linksite">Mes Livres Pro</a>
       </span>
     </div>
 
     <div style="height:24px;"></div>
 
-    <!-- FOOTER NAV -->
     <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
       <span style="flex:0 0 auto;">
-        <span style="font-size:24px;">
-          <a href="#top" style="text-decoration:none; color:#000000;">&#8679;</a>
-        </span>
+        <span style="font-size:24px;"><a href="#top" style="text-decoration:none; color:#000000;">&#8679;</a></span>
       </span>
 
       <div style="flex:1; text-align:center;">
         <span class="hero-sub">
           Catalogue généré avec
-          <a href="https://www.soft-creation.fr/MesLivresPro.html" target="_blank" class="linksite">
-            Mes Livres Pro
-          </a>
+          <a href="https://www.soft-creation.fr/MesLivresPro.html" target="_blank" class="linksite">Mes Livres Pro</a>
         </span>
       </div>
 
       <span style="flex:0 0 auto;">
-        <span style="font-size:24px;">
-          <a href="#top" style="text-decoration:none; color:#000000;">&#8679;</a>
-        </span>
+        <span style="font-size:24px;"><a href="#top" style="text-decoration:none; color:#000000;">&#8679;</a></span>
       </span>
     </div>
 
     <a id="down"></a>
   </div>
 
-  <!-- =========================================
-       ✅ ICI: garde tes scripts de bas de page actuels
-       (Enter keydown + updateButtonLabel + DOMContentLoaded lazyload)
-       Tu peux les recopier tels quels depuis ton ancien fichier.
-       ========================================= -->
+  <!-- ✅ IMPORTANT : colle ici le GROS <script> de ton ancien fichier html.txt -->
+  <!-- (celui qui contient createRow, loadNextChunk, initLazyLoad, rechercherTitre/Auteur/Genre, etc.) -->
+  <!--
+  <script>
+    ... TON SCRIPT ORIGINAL COMPLET ...
+  </script>
+  -->
 
-  <!-- Exemple: version safe de tes listeners "Enter" -->
+  <!-- ✅ petit bonus : la touche Entrée (si ton script original ne le fait pas déjà) -->
   <script>
     document.addEventListener('DOMContentLoaded', function () {
       const bindEnter = (inputId, buttonId) => {
@@ -181,7 +118,5 @@
       bindEnter('searchInputGenre', 'searchButtonGenre');
     });
   </script>
-
-  <!-- Si tu veux garder tes updateButtonLabel actuels, copie/colle-les ici (inchangés). -->
 </body>
 </html>
