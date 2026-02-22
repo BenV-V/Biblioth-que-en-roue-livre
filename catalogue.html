@@ -47,13 +47,7 @@
   <button id="resetGenreButton" class="btn-secondary" onclick="resetGenreSelect()">
     Effacer
   </button>
-</div>/
-      <div class="search-grid">
-        <input type="search" id="searchInputGenre" title="Séparer les genres par un espace" placeholder="Rechercher par Genre..." />
-        <button id="searchButtonGenre" class="btn1" onclick="rechercherGenre()" style="width:50px;" aria-label="Rechercher par genre">
-          <span style="font-size:14px;">&#128269;</span>
-        </button>
-      </div>/
+</div>
       
 <div class="search-grid">
   <button id="resetButton" class="btn-secondary" onclick="resetRecherche()">
@@ -2381,21 +2375,21 @@ function singularKey(key) {
   return key.endsWith("s") && !key.endsWith("ss") ? key.slice(0, -1) : key;
 }
 function looksTruncated(label) {
-  const s = label.trim();
+  const s = (label || "").trim();
+  if (!s) return true;
 
   // finit par "&"
   if (s.endsWith("&")) return true;
 
-  // finit par une lettre accentuée isolée ou syllabe suspecte
-  if (/(é|è|ê|à|ù|ô|î|ï|ü|ç)$/i.test(s) && s.length < 12) return true;
+  // finit par un mot-outil -> souvent tronqué
+  if (/\b(et|de|des|du|la|le|les|d'|à)\s*$/i.test(s)) return true;
 
-  // si un autre genre plus long contient exactement celui-ci
-  // ex: "Litté" contenu dans "Littérature"
-  for (let other of allLivresGenresCache) {
-    if (other.length > s.length + 3 && other.includes(s)) {
-      return true;
-    }
-  }
+  // dernier mot très court + accent (ex: "Litté", "vidé", "encyclopé")
+  const last = s.split(" ").pop() || "";
+  if (last.length <= 4 && /[àâäéèêëîïôöùûüç]/i.test(last)) return true;
+
+  return false;
+}
 
   return false;
 }
@@ -2445,13 +2439,9 @@ labels.forEach((label, key) => {
 });
 
 const entries = Array.from(labels.entries())
-  .filter(([key, label]) =>
-    (counts.get(key) || 0) >= 2 &&
-    !looksTruncated(label)
-  )
-  .sort((a, b) =>
-    a[1].localeCompare(b[1], "fr", { sensitivity: "base" })
-  );
+  // garde seulement les libellés "propres" (tronqués évidents)
+  .filter(([key, label]) => !looksTruncated(label))
+  .sort((a, b) => a[1].localeCompare(b[1], "fr", { sensitivity: "base" }));
 
 entries.forEach(([key, obj]) => {
   const opt = document.createElement("option");
@@ -2534,6 +2524,7 @@ document.addEventListener("DOMContentLoaded", function () {
 </script>
   </body> 
 </html>
+
 
 
 
