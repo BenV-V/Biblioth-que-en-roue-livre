@@ -2356,26 +2356,21 @@ function splitGenres(raw) {
 /* Filtre les valeurs "pourries" */
 function isValidGenreLabel(label) {
   const s = (label || "").replace(/\s+/g, " ").trim();
+
   if (s.length < 4) return false;
+  if (!/^[A-ZÀÂÄÉÈÊËÎÏÔÖÙÛÜÇ]/.test(s)) return false; 
+  // ⬆️ commence obligatoirement par une majuscule
+
   if (/^[&]+$/.test(s)) return false;
   if (/[<>]/.test(s)) return false;
 
-  // UUID / hash
-  if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i.test(s)) return false;
-  if (/^[0-9a-f]{20,}$/i.test(s)) return false;
+  // UUID
+  if (/^[0-9a-f-]{20,}$/i.test(s)) return false;
 
-  // finit par & (ex: "sociologie &")
-  if (/[&]$/.test(s)) return false;
-
-  // morceaux trop "mots-seuls"
-  if (/^[a-zà-ÿ]{1,3}$/i.test(s)) return false;
-
-  // fin suspecte (tronquée)
+  // finit par un mot tronqué typique
   if (/\b(et|de|des|du|la|le|les|d'|à|a)\s*$/i.test(s)) return false;
-  if (/[…,:;]\s*$/.test(s)) return false;
 
-  // fin par lettre accentuée seule (souvent "vidé", "encyclopé", "litté")
-  // -> si le mot final fait <= 4 et contient un accent, on jette
+  // mot final trop court avec accent (genre "litté", "vidé")
   const last = s.split(" ").pop() || "";
   if (last.length <= 4 && /[àâäéèêëîïôöùûüç]/i.test(last)) return false;
 
@@ -2515,5 +2510,6 @@ document.addEventListener("DOMContentLoaded", function () {
 </script>
   </body> 
 </html>
+
 
 
