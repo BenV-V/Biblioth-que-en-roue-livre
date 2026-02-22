@@ -2083,21 +2083,22 @@ loadNextChunk();
  </script>
 
   <!-- ✅ petit bonus : la touche Entrée (si ton script original ne le fait pas déjà) -->
-  <script>
-    document.addEventListener('DOMContentLoaded', function () {
-      const bindEnter = (inputId, buttonId) => {
-        const inp = document.getElementById(inputId);
-        const btn = document.getElementById(buttonId);
-        if (!inp || !btn) return;
-        inp.addEventListener('keydown', (e) => {
-          if (e.key === 'Enter') btn.click();
-        });
-      };
-      bindEnter('searchInput', 'searchButton');
-      bindEnter('searchInputAuteur', 'searchButtonAuteur');
-      bindEnter('searchInputGenre', 'searchButtonGenre');
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const bindEnter = (inputId, buttonId) => {
+    const inp = document.getElementById(inputId);
+    const btn = document.getElementById(buttonId);
+    if (!inp || !btn) return;
+    inp.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') btn.click();
     });
-  </script>
+  };
+
+  bindEnter('searchInput', 'searchButton');
+  bindEnter('searchInputAuteur', 'searchButtonAuteur');
+  bindEnter('searchInputGenre', 'searchButtonGenre');
+});
+</script>
+
 </body>
 </html>
-
