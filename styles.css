@@ -1,122 +1,62 @@
-/* RESET TOTAL + PRIORITÉ MAX */
-* {
-  margin: 0 !important;
-  padding: 0 !important;
-  box-sizing: border-box !important;
-}
-
-/* COULEURS ASSO-LA-COTE : BEIGE/CHALEUREUX */
-body {
-  font-family: 'Arial', sans-serif !important;
-  background: linear-gradient(135deg, #f8f4e9 0%, #e8d9c6 50%, #d4c4a8 100%) !important;
-  color: #4a4a4a !important;
-  min-height: 100vh !important;
-  padding: 30px 20px !important;
-}
-
-/* TITRE */
+/* TITRE DISCRET (sans cadre) */
 h1 {
+  margin-top: 30px !important;
+  margin-bottom: 60px !important;
+  padding: 0 !important;              /* SUPPRIMÉ cadre */
+  color: #b85c38 !important;          /* Rouille chaleureux */
+  font-size: 2.4em !important;
   text-align: center !important;
-  color: #8b4513 !important; /* Marron chaleureux */
-  margin-bottom: 50px !important;
-  font-size: 2.5em !important;
-  font-weight: bold !important;
-  text-shadow: 2px 2px 4px rgba(255,255,255,0.8) !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.5px !important;
 }
 
-/* GRILLE LIVRES RESPONSIVE */
+/* CARTES LIVRES ÉPURÉES (sans contour moche) */
 img {
-  display: block !important;
-  width: 100% !important;
-  max-width: 220px !important;
-  height: 320px !important;
-  object-fit: cover !important;
-  border-radius: 12px !important;
-  box-shadow: 0 8px 25px rgba(139,69,19,0.2) !important;
-  transition: all 0.4s ease !important;
-  margin: 15px auto !important;
+  background: #fafaf7 !important;     /* Beige ultra-doux */
+  padding: 12px !important;           /* Marge interne clean */
+  border-radius: 16px !important;
+  box-shadow: 
+    0 8px 28px rgba(184,92,56,0.12),  /* Ombre rouille subtile */
+    0 2px 8px rgba(0,0,0,0.06) !important;
+  margin: 22px !important;
+  border: none !important;            /* SUPPRIMÉ contour */
+  position: relative !important;
 }
 
-/* EFFET HOVER MAGIQUE */
+img::before {                       /* Effet "couverture" subtil */
+  content: '';
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  right: 8px;
+  bottom: 8px;
+  background: rgba(212,165,116,0.1); /* Ocre transparent */
+  border-radius: 12px;
+  z-index: 0;
+  pointer-events: none;
+}
+
 img:hover {
-  transform: translateY(-10px) scale(1.05) !important;
-  box-shadow: 0 25px 50px rgba(255,140,0,0.4) !important;
-  border: 4px solid #ff8c00 !important; /* Orange glow */
+  transform: translateY(-8px) !important;
+  box-shadow: 
+    0 20px 45px rgba(184,92,56,0.25),
+    0 0 0 1px rgba(138,154,123,0.3) !important; /* Bordure vert sauge */
 }
 
-/* FORM RECHERCHE */
-form, input, button {
-  background: rgba(255,255,255,0.9) !important;
-  border-radius: 25px !important;
-  border: 2px solid #d4af37 !important; /* Doré */
-  padding: 15px !important;
-  margin: 10px !important;
-  font-size: 1.1em !important;
+/* RECHERCHE harmonisée */
+form {
+  background: linear-gradient(135deg, #fafaf7 0%, #f5f2e9 100%) !important;
+  border: 1px solid #d4a574 !important;  /* Ocre fin */
+  box-shadow: 0 10px 30px rgba(184,92,56,0.08) !important;
 }
 
 button {
-  background: linear-gradient(45deg, #ff8c00, #ff7f50) !important;
-  color: white !important;
-  border: none !important;
-  cursor: pointer !important;
-  font-weight: bold !important;
-}
-
-button:hover {
-  background: linear-gradient(45deg, #ff7f50, #ff8c00) !important;
-  transform: scale(1.05) !important;
+  background: linear-gradient(135deg, #b85c38, #d4a574) !important;
+  border: 2px solid #8a9a7b !important;  /* Vert sauge */
 }
 
 /* Mobile */
 @media (max-width: 768px) {
-  body { padding: 20px 10px !important; }
-  h1 { font-size: 2em !important; }
-  img { max-width: 180px !important; height: 260px !important; }
-}
-/* TITRE PLUS Aéré */
-h1 {
-  margin-top: 40px !important;
-  margin-bottom: 70px !important;
-  padding: 20px !important;
-  background: rgba(255,255,255,0.3) !important;
-  border-radius: 20px !important;
-  display: inline-block !important;
-}
-
-/* CARTES LIVRES NETTES (fond blanc + ombre douce) */
-img {
-  background: white !important;           /* Fond blanc propre */
-  padding: 8px !important;               /* Marge interne douce */
-  border-radius: 18px !important;        /* Coins arrondis généreux */
-  box-shadow: 
-    0 12px 35px rgba(0,0,0,0.12),       /* Ombre douce longue */
-    0 4px 12px rgba(0,0,0,0.08) !important; /* Ombre rapprochée */
-  margin: 25px !important;               /* Espacement uniforme */
-  border: 1px solid rgba(255,255,255,0.8) !important; /* Contour subtil */
-}
-
-/* RECHERCHE PLUS Élégante */
-form {
-  background: rgba(255,255,255,0.95) !important;
-  padding: 25px !important;
-  border-radius: 30px !important;
-  box-shadow: 0 15px 40px rgba(0,0,0,0.1) !important;
-  margin-bottom: 50px !important;
-  max-width: 800px !important;
-  margin-left: auto !important;
-  margin-right: auto !important;
-}
-
-input, button {
-  border-radius: 25px !important;
-  padding: 15px 25px !important;
-  border: 3px solid #ff8c00 !important;
-  margin: 8px !important;
-}
-
-/* Mobile optimisé */
-@media (max-width: 768px) {
-  h1 { margin-top: 20px !important; margin-bottom: 40px !important; font-size: 2em !important; }
-  img { margin: 15px !important; max-width: 170px !important; }
-  form { padding: 20px !important; }
+  h1 { margin-bottom: 40px !important; font-size: 2em !important; }
+  img { margin: 18px !important; padding: 10px !important; }
 }
