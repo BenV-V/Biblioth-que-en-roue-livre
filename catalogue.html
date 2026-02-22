@@ -2378,32 +2378,24 @@ function looksTruncated(label) {
   const s = (label || "").trim();
   if (!s) return true;
 
-  // finit par "&"
   if (s.endsWith("&")) return true;
-
-  // finit par un mot-outil -> souvent tronqué
   if (/\b(et|de|des|du|la|le|les|d'|à)\s*$/i.test(s)) return true;
 
-  // dernier mot très court + accent (ex: "Litté", "vidé", "encyclopé")
   const last = s.split(" ").pop() || "";
   if (last.length <= 4 && /[àâäéèêëîïôöùûüç]/i.test(last)) return true;
 
   return false;
 }
 
-  return false;
-}
 function buildGenreSelect() {
   const sel = document.getElementById("genreSelect");
   if (!sel || !Array.isArray(allLivres)) return;
 
-  // Nettoie les options existantes (sauf la 1ère "Tous les genres")
   while (sel.options.length > 1) sel.remove(1);
 
-  // key normalisée -> label affiché
-const counts = new Map();   // key -> nb d'occurrences
-const labels = new Map();   // key -> meilleur libellé
-const allLivresGenresCache = Array.from(labels.values());
+  const counts = new Map(); // key -> nb d'occurrences
+  const labels = new Map(); // key -> meilleur libellé
+
   allLivres.forEach(l => {
     const raw = l.data5 || "";
     splitGenres(raw).forEach(label => {
@@ -2411,44 +2403,43 @@ const allLivresGenresCache = Array.from(labels.values());
 
       const key = normalizeKey(label);
       if (!key) return;
-    counts.set(key, (counts.get(key) || 0) + 1);
 
-    if (!labels.has(key) || label.length > labels.get(key).length) {
-      labels.set(key, label);
+      counts.set(key, (counts.get(key) || 0) + 1);
+
+      if (!labels.has(key) || label.length > labels.get(key).length) {
+        labels.set(key, label);
       }
     });
   });
 
-  // Tri par label (fr, insensible aux accents)
-// Regroupe singulier/pluriel + filtre les libellés tronqués
-const grouped = new Map(); // skey -> { label, count }
+  // Regroupe singulier/pluriel
+  const grouped = new Map(); // skey -> { label, count }
+  labels.forEach((label, key) => {
+    if (looksTruncated(label)) return;
 
-labels.forEach((label, key) => {
-  if (!isValidGenreLabel(label)) return;
+    const skey = singularKey(key);
+    const c = counts.get(key) || 0;
 
-  const skey = singularKey(key);
-  const c = counts.get(key) || 0;
+    if (!grouped.has(skey)) {
+      grouped.set(skey, { label, count: c });
+    } else {
+      const cur = grouped.get(skey);
+      if (label.length > cur.label.length) cur.label = label;
+      cur.count += c;
+    }
+  });
 
-  if (!grouped.has(skey)) {
-    grouped.set(skey, { label, count: c });
-  } else {
-    const cur = grouped.get(skey);
-    if (label.length > cur.label.length) cur.label = label; // garde le plus complet
-    cur.count += c;
-  }
-});
+  // ✅ Ici, on trie et on garde tout (>=1). Mets >=2 si tu veux plus strict.
+  const entries = Array.from(grouped.entries())
+    .filter(([, obj]) => obj.count >= 1)
+    .sort((a, b) => a[1].label.localeCompare(b[1].label, "fr", { sensitivity: "base" }));
 
-const entries = Array.from(labels.entries())
-  .filter(([key, label]) => !looksTruncated(label))
-  .filter(([key]) => (counts.get(key) || 0) >= 1) // ← mets 2 si tu veux plus strict
-  .sort((a, b) => a[1].localeCompare(b[1], "fr", { sensitivity: "base" }));
-
-entries.forEach(([key, obj]) => {
-  const opt = document.createElement("option");
-  opt.value = key;
-  opt.textContent = obj.label;
-  sel.appendChild(opt);
-});
+  entries.forEach(([key, obj]) => {
+    const opt = document.createElement("option");
+    opt.value = key;          // key normalisée
+    opt.textContent = obj.label;
+    sel.appendChild(opt);
+  });
 }
 
 function rechercherGenreDepuisSelect() {
@@ -2460,7 +2451,6 @@ function rechercherGenreDepuisSelect() {
   // Option : vider les autres champs pour éviter les filtres cumulés
   const t = document.getElementById("searchInput"); if (t) t.value = "";
   const a = document.getElementById("searchInputAuteur"); if (a) a.value = "";
-  const g = document.getElementById("searchInputGenre"); if (g) g.value = "";
 
   if (!chosenKey) {
     if (typeof afficherTout === "function") afficherTout();
@@ -2519,11 +2509,11 @@ document.addEventListener("DOMContentLoaded", function () {
 
   bindEnter("searchInput", "searchButton");
   bindEnter("searchInputAuteur", "searchButtonAuteur");
-  bindEnter("searchInputGenre", "searchButtonGenre");
 });
 </script>
   </body> 
 </html>
+
 
 
 
