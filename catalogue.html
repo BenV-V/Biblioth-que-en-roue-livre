@@ -20,7 +20,11 @@
         <p class="hero-sub">Recherche par titre, auteur ou genre — clic sur un livre pour voir les détails.</p>
       </div>
     </section>
-
+<!-- Compat : éléments attendus par le JS, mais non utilisés -->
+<div style="display:none;">
+  <input type="search" id="searchInputMotcle" />
+  <button id="searchButtonMotcle" onclick="rechercherMotcle()">OK</button>
+</div>
     <section class="search-card" aria-label="Recherche">
       <div class="search-grid">
         <input type="search" id="searchInput" placeholder="Rechercher par Titre..." />
@@ -2096,3 +2100,4 @@ loadNextChunk();
   </script>
 </body>
 </html>
+
