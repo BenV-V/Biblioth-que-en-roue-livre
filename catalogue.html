@@ -2305,6 +2305,9 @@ if (!searchActive && window.innerHeight + window.scrollY >= document.body.offset
 loadNextChunk();
    }
   });
+  document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') resetRecherche();
+});
  </script>
 
   <!-- ✅ petit bonus : la touche Entrée (si ton script original ne le fait pas déjà) -->
@@ -2327,5 +2330,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
 </body>
 </html>
+
 
 
