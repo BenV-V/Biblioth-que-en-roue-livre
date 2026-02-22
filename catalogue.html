@@ -2439,8 +2439,8 @@ labels.forEach((label, key) => {
 });
 
 const entries = Array.from(labels.entries())
-  // garde seulement les libellés "propres" (tronqués évidents)
   .filter(([key, label]) => !looksTruncated(label))
+  .filter(([key]) => (counts.get(key) || 0) >= 1) // ← mets 2 si tu veux plus strict
   .sort((a, b) => a[1].localeCompare(b[1], "fr", { sensitivity: "base" }));
 
 entries.forEach(([key, obj]) => {
@@ -2524,6 +2524,7 @@ document.addEventListener("DOMContentLoaded", function () {
 </script>
   </body> 
 </html>
+
 
 
 
