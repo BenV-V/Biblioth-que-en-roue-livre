@@ -2355,12 +2355,22 @@ function splitGenres(raw) {
 
 /* Filtre les valeurs "pourries" */
 function isValidGenreLabel(label) {
-  const s = (label || "").trim();
-  if (s.length < 2) return false;                 // trop court: "É", "é", etc.
+  const s = (label || "").replace(/\s+/g, " ").trim();
+  if (s.length < 4) return false;                 // vire "Mé", "Thé", "té", "SF" etc.
   if (/^[&]+$/.test(s)) return false;             // "&" seul
-  if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i.test(s)) return false; // UUID
-  if (/^[0-9a-f]{20,}$/i.test(s)) return false;   // hash long
-  if (/[<>]/.test(s)) return false;               // sécurité basique
+  if (/[<>]/.test(s)) return false;
+
+  // UUID / hash
+  if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i.test(s)) return false;
+  if (/^[0-9a-f]{20,}$/i.test(s)) return false;
+
+  // morceaux "cassés" typiques
+  if (/[&]$/.test(s)) return false;               // "sociologie &"
+  if (/^[a-zà-ÿ]{1,3}$/i.test(s)) return false;   // "té", "tique" etc.
+
+  // finit par une préposition/bout de mot trop suspect
+  if (/\b(et|de|des|du|la|le|les|d')$/i.test(s)) return false;
+
   return true;
 }
 
@@ -2372,7 +2382,8 @@ function buildGenreSelect() {
   while (sel.options.length > 1) sel.remove(1);
 
   // key normalisée -> label affiché
-  const map = new Map();
+const counts = new Map();   // key -> nb d'occurrences
+const labels = new Map();   // key -> meilleur libellé
 
   allLivres.forEach(l => {
     const raw = l.data5 || "";
@@ -2381,18 +2392,18 @@ function buildGenreSelect() {
 
       const key = normalizeKey(label);
       if (!key) return;
+    counts.set(key, (counts.get(key) || 0) + 1);
 
-      // Si doublon, garde le libellé le plus "long" (souvent le plus complet)
-      if (!map.has(key) || label.length > map.get(key).length) {
-        map.set(key, label);
+    if (!labels.has(key) || label.length > labels.get(key).length) {
+      labels.set(key, label);
       }
     });
   });
 
   // Tri par label (fr, insensible aux accents)
-  const entries = Array.from(map.entries()).sort((a, b) =>
-    a[1].localeCompare(b[1], "fr", { sensitivity: "base" })
-  );
+  const entries = Array.from(labels.entries())
+  .filter(([key]) => (counts.get(key) || 0) >= 2) // ✅ garde seulement si apparaît >= 2
+  .sort((a, b) => a[1].localeCompare(b[1], "fr", { sensitivity: "base" }));
 
   entries.forEach(([key, label]) => {
     const opt = document.createElement("option");
@@ -2475,3 +2486,4 @@ document.addEventListener("DOMContentLoaded", function () {
 </script>
   </body> 
 </html>
+
