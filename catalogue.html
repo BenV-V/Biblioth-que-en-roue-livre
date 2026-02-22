@@ -2323,12 +2323,19 @@ loadNextChunk();
 }
 
 /* Essaie de séparer proprement si certains livres ont plusieurs genres */
+function normalize(str) {
+  return (str || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+}
+
 function splitGenres(raw) {
-  const s = normalizeGenre(raw);
-  if (!s) return [];
-  return s
-    .split(/[,;/|]+/)          // , ; / |
-    .map(g => normalizeGenre(g))
+  if (!raw) return [];
+  return raw
+    .split(/[,;/|]+/)
+    .map(g => g.trim())
     .filter(Boolean);
 }
 
@@ -2344,9 +2351,9 @@ function buildGenreSelect() {
   });
 
   // Tri alphabétique (insensible aux accents)
-  const genres = Array.from(set).sort((a, b) =>
-    a.localeCompare(b, 'fr', { sensitivity: 'base' })
-  );
+const genres = Array.from(set).sort((a, b) =>
+  normalize(a).localeCompare(normalize(b))
+);
 
   // Remplissage
   // (On garde la 1ère option "Tous les genres")
@@ -2387,7 +2394,7 @@ function rechercherGenreDepuisSelect() {
   let count = 0;
   allLivres.forEach(livre => {
     const genresLivre = splitGenres(livre.data5 || '');
-    if (genresLivre.includes(chosen)) {
+    if (genresLivre.some(g => normalize(g) === normalize(chosen))) {
       table.appendChild(createRow(livre));
       count++;
     }
@@ -2431,6 +2438,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 </body>
 </html>
+
 
 
 
