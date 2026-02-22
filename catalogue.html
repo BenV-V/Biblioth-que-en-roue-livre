@@ -2378,12 +2378,23 @@ function looksTruncated(label) {
   const s = (label || "").trim();
   if (!s) return true;
 
+  // finit par "&" ou par un mot-outil → souvent tronqué
   if (s.endsWith("&")) return true;
   if (/\b(et|de|des|du|la|le|les|d'|à)\s*$/i.test(s)) return true;
 
-  const last = s.split(" ").pop() || "";
-  if (last.length <= 4 && /[àâäéèêëîïôöùûüç]/i.test(last)) return true;
+  // ✅ 1) finit par une lettre accentuée (é/è/ê/à/ù/ç/…) → souvent un mot coupé
+  // mais on évite de virer des mots courts légitimes comme "Café"
+  if (/[àâäéèêëîïôöùûüç]$/i.test(s) && s.length >= 6) return true;
 
+  // ✅ 2) finit par apostrophe (ex: "Promotion J'")
+  if (/[’']$/.test(s)) return true;
+
+  // ✅ 3) dernier mot très court et "bizarre" (ex: "Socié", "Premiè")
+  const last = s.split(" ").pop() || "";
+  if (last.length <= 6 && /[àâäéèêëîïôöùûüç]/i.test(last) && !/^(café|thé)$/i.test(last)) {
+    return true;
+  }
+if (!/[a-z0-9)\]]$/i.test(s)) return true;
   return false;
 }
 
@@ -2513,6 +2524,7 @@ document.addEventListener("DOMContentLoaded", function () {
 </script>
   </body> 
 </html>
+
 
 
 
