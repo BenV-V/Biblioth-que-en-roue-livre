@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Bibliothèque – En Roue Livre</title>
+<title>Bibliothèque</title>
 <link rel="stylesheet" href="styles.css?v=3">
-<style>
+    <style>
         .lazyload {
             min-height: 100px;
             background: #ffffff;
@@ -77,53 +77,704 @@ td.col-image img {width:77px !important; height: auto !important; object-fit: co
                         }
 #tableLivres {font-size: 14px; }
 </style>
-</head>
-
-<body id="top">
-
-<!-- HEADER -->
-<div class="hero-section">
-  <div class="header">
-    <h1>Parcourez la bibliothèque En Roue Livre !</h1>
-  </div>
-</div>
-
-<!-- RECHERCHE -->
-<div class="search-zone" style="margin: 12px 0;">
-  <input type="search" id="searchInput" placeholder="Rechercher par titre…" />
-  <button id="searchButton" class="btn1" type="button">🔍</button>
-
-  <input type="search" id="searchInputAuteur" placeholder="Rechercher par auteur…" style="margin-left: 8px;" />
-  <button id="searchButtonAuteur" class="btn1" type="button">🔍</button>
-
-  <input type="search" id="searchInputGenre" placeholder="Rechercher par genre…" style="margin-left: 8px;" />
-  <button id="searchButtonGenre" class="btn1" type="button">🔍</button>
-
-  <div id="noResultMessage" style="display:none;font-weight:bold; color:red; margin-top: 10px;">Pas de résultat</div>
-</div>
-
-<!-- TABLE -->
-<table id="tableLivres">
-  <tr>
-    <th>Couverture</th>
-    <th id="detail_titre" style="cursor:pointer;">Titre / Auteur(s)</th>
-  </tr>
-</table>
-
-<h3 id="nombreTitres">Nombre de titres : 0</h3>
-<button id="showAllButton" class="btn1" type="button" style="display:none;width:160px;">Afficher tout</button>
-
-<br><br>
-
-<h2 class="footer">
-  Catalogue généré avec
-  <a href="https://www.soft-creation.fr/MesLivresPro.html" target="_blank" class="linksite">Mes Livres Pro</a>
-</h2>
-
-<a name="down"></a>
-
-<!-- DONNEES (NE PAS MODIFIER) -->
 <script>
+
+    document.getElementById('searchInput').addEventListener('keydown', function(event) {
+        if (event.key === 'Enter') {
+            document.getElementById('searchButton').click();
+        }
+    });
+
+
+                   function toggleDetails(id) {
+                                 var element = document.getElementById(id); // La cellule de la deuxième colonne
+                                    var isExpanded = element.getAttribute('data-expanded') === 'true';
+
+             if (isExpanded) {
+        // Si déjà développé, on cache les détails et n'affiche que le titre
+        element.innerHTML = element.getAttribute('data-display');
+        element.setAttribute('data-expanded', 'false');
+    } else {
+        // Sinon, on montre tous les détails
+        var details = ' '  +'<b>Titre :</b> ' + element.getAttribute('data-title') + '<br/>' +'<b>Auteur(s) :</b> ' + element.getAttribute('data2') + '<br/>' +'<b>N&#176; ISBN :</b> ' + element.getAttribute('data3') + '<br/>' +'<b>Ann&#233;e parution :</b> ' + element.getAttribute('data4') + '<br/>' +'<b>Genre :</b> ' + element.getAttribute('data5') + '<br/>' +'<b>R&#233;sum&#233; :</b> ' + element.getAttribute('data6') + '<br/>' ;element.innerHTML = details;
+        element.setAttribute('data-expanded', 'true');
+    }
+}
+                
+var detailsVisible = false;
+var detailsVisible = false;
+function toggleAllDetails() {
+    var rows = document.querySelectorAll('[id^="titre_"]');
+    rows.forEach(function(row) {
+        var isExpanded = row.getAttribute('data-expanded') === 'true';
+        if (detailsVisible && isExpanded) {
+            toggleDetails(row.id); 
+        } else if (!detailsVisible && !isExpanded) {
+            toggleDetails(row.id); 
+        }
+    });
+    detailsVisible = !detailsVisible;
+    //var button = document.getElementById('toggleAllButton');
+    //button.innerText = detailsVisible ? 'Masquer les détails' : 'Afficher les détails';
+    var headerCell = document.getElementById('detail_titre'); 
+    headerCell.innerText = detailsVisible ? 'Détails' : 'Titre / Auteur(s)';
+}
+let searchActive = false;
+function rechercherTitre() {
+    // Curseur d'attente
+    document.body.style.cursor = 'wait';
+			
+document.getElementById("searchInputAuteur").value = '';
+document.getElementById("searchInputGenre").value = '';
+
+    setTimeout(function () {
+        try {
+            // --- Helpers (locaux à la fonction, n'impactent pas le reste) ---
+            function decodeEntities(str) {
+                if (!str) return "";
+                const txt = document.createElement('textarea');
+                txt.innerHTML = str; // décode &eacute;, &#233;, &#39;, etc.
+                return txt.value;
+            }
+            function removeAccents(str) {
+                return (str || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            }
+            function norm(str) {
+                // Décodage entités -> minuscules -> trim -> suppression accents
+                return removeAccents(decodeEntities(str || "").toLowerCase().trim());
+            }
+
+            // Récupération des éléments
+            var inputEl = document.getElementById('searchInput');
+            var table   = document.getElementById('tableLivres');
+            var nombreTitresElement = document.getElementById('nombreTitres');
+            var noRes   = document.getElementById('noResultMessage');
+            var showAll = document.getElementById('showAllButton');
+
+            if (!table) { console.error('tableLivres introuvable'); return; }
+
+            // Normaliser la requête utilisateur (accents + entités)
+            var q = norm(inputEl ? inputEl.value : "");
+
+            // Si la recherche est vide → revenir à l’affichage normal (chunks)
+            if (q === "") {
+                // fin du mode recherche
+                if (typeof window.searchActive === "undefined") window.searchActive = false;
+                window.searchActive = false;
+
+                // réinitialiser la table (on purge et on recharge le premier bloc)
+                while (table.rows.length > 1) table.deleteRow(1);
+                if (typeof currentIndex !== "undefined") currentIndex = 0;
+                if (typeof loadNextChunk === "function") loadNextChunk();
+
+                if (nombreTitresElement) {
+                    if (typeof allLivres !== "undefined" && Array.isArray(allLivres)) {
+                        nombreTitresElement.innerHTML = "Nombre de titres : " + allLivres.length;
+                    } else {
+                        // fallback : compter lignes DOM (hors entête)
+                        nombreTitresElement.innerHTML = "Nombre de titres : " + Math.max(0, table.rows.length - 1);
+                    }
+                }
+                if (noRes)  noRes.style.display  = 'none';
+                if (showAll) showAll.style.display = 'none';
+                return;
+            }
+
+            // Recherche non vide → activer le mode recherche (bloque l'injection au scroll)
+            if (typeof window.searchActive === "undefined") window.searchActive = true;
+            window.searchActive = true;
+
+            // Mots-clés normalisés (sans accents)
+            var words = q.split(/\s+/).filter(Boolean);
+
+            // --- CAS 1 : allLivres disponible (catalogue complet côté JS) ---
+            if (typeof allLivres !== "undefined" && Array.isArray(allLivres)) {
+                // Vider la table sauf l’entête
+                while (table.rows.length > 1) table.deleteRow(1);
+
+                var results = allLivres.filter(function (livre) {
+                    // titre + auteur normalisés (décodage entités + accents)
+                    //var hay = norm((livre.titre || "") + " " + (livre.auteur || ""));
+                    var hay = norm(livre.titre || "");
+                    return words.every(function (w) { return hay.includes(w); });
+                });
+
+                // Injecter uniquement les résultats
+                var count = 0;
+                results.forEach(function (livre) {
+                    table.appendChild(createRow(livre));
+                    count++;
+                });
+
+                // Réactiver le lazy-load des images pour les lignes injectées
+                if (typeof initLazyLoad === "function") initLazyLoad();
+
+                // UI
+                if (nombreTitresElement) nombreTitresElement.innerHTML = count + " titre(s) trouvé(s)";
+                if (noRes)   noRes.style.display   = (count > 0) ? 'none' : 'block';
+                if (showAll) showAll.style.display = 'block';
+                return;
+            }
+
+            // --- CAS 2 : fallback DOM (si allLivres n'existe pas) ---
+            // ⚠️ Dans ce cas, on NE vide PAS la table : on filtre les lignes existantes.
+            var rows = table.getElementsByTagName('tr');
+            var countDOM = 0;
+            for (var i = 1; i < rows.length; i++) { // ignorer l'entête
+                var td = rows[i].getElementsByTagName('td')[1];
+                if (!td) continue;
+                var hay = norm(td.getAttribute('data-title') || td.textContent || "");
+                var ok = words.every(function (w) { return hay.includes(w); });
+                rows[i].style.display = ok ? '' : 'none';
+                if (ok) countDOM++;
+            }
+            if (nombreTitresElement) nombreTitresElement.innerHTML = countDOM + " titre(s) trouvé(s)";
+            if (noRes)   noRes.style.display   = (countDOM > 0) ? 'none' : 'block';
+            if (showAll) showAll.style.display = 'block';
+        }
+        finally {
+            // Restaure le curseur
+            document.body.style.cursor = 'default';
+        }
+    }, 100);
+}
+				
+function rechercherAuteur() {
+    // Curseur d'attente
+    document.body.style.cursor = 'wait';
+    document.getElementById("searchInput").value = '';
+
+document.getElementById("searchInputGenre").value = '';
+
+    setTimeout(function () {
+        try {
+            // --- Helpers (locaux à la fonction, n'impactent pas le reste) ---
+            function decodeEntities(str) {
+                if (!str) return "";
+                const txt = document.createElement('textarea');
+                txt.innerHTML = str; // décode &eacute;, &#233;, &#39;, etc.
+                return txt.value;
+            }
+            function removeAccents(str) {
+                return (str || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            }
+            function norm(str) {
+                // Décodage entités -> minuscules -> trim -> suppression accents
+                return removeAccents(decodeEntities(str || "").toLowerCase().trim());
+            }
+
+            // Récupération des éléments
+            var inputEl = document.getElementById('searchInputAuteur');
+            var table   = document.getElementById('tableLivres');
+            var nombreTitresElement = document.getElementById('nombreTitres');
+            var noRes   = document.getElementById('noResultMessage');
+            var showAll = document.getElementById('showAllButton');
+
+            if (!table) { console.error('tableLivres introuvable'); return; }
+
+            // Normaliser la requête utilisateur (accents + entités)
+            var q = norm(inputEl ? inputEl.value : "");
+
+            // Si la recherche est vide → revenir à l’affichage normal (chunks)
+            if (q === "") {
+                // fin du mode recherche
+                if (typeof window.searchActive === "undefined") window.searchActive = false;
+                window.searchActive = false;
+
+                // réinitialiser la table (on purge et on recharge le premier bloc)
+                while (table.rows.length > 1) table.deleteRow(1);
+                if (typeof currentIndex !== "undefined") currentIndex = 0;
+                if (typeof loadNextChunk === "function") loadNextChunk();
+
+                if (nombreTitresElement) {
+                    if (typeof allLivres !== "undefined" && Array.isArray(allLivres)) {
+                        nombreTitresElement.innerHTML = "Nombre de titres : " + allLivres.length;
+                    } else {
+                        // fallback : compter lignes DOM (hors entête)
+                        nombreTitresElement.innerHTML = "Nombre de titres : " + Math.max(0, table.rows.length - 1);
+                    }
+                }
+                if (noRes)  noRes.style.display  = 'none';
+                if (showAll) showAll.style.display = 'none';
+                return;
+            }
+
+            // Recherche non vide → activer le mode recherche (bloque l'injection au scroll)
+            if (typeof window.searchActive === "undefined") window.searchActive = true;
+            window.searchActive = true;
+
+            // Mots-clés normalisés (sans accents)
+            var words = q.split(/\s+/).filter(Boolean);
+
+            // --- CAS 1 : allLivres disponible (catalogue complet côté JS) ---
+            if (typeof allLivres !== "undefined" && Array.isArray(allLivres)) {
+                // Vider la table sauf l’entête
+                while (table.rows.length > 1) table.deleteRow(1);
+
+                var results = allLivres.filter(function (livre) {
+                    // auteur normalisés (décodage entités + accents)
+                    var hay = norm(livre.data2 || "");
+                    return words.every(function (w) { return hay.includes(w); });
+                });
+
+                // Injecter uniquement les résultats
+                var count = 0;
+                results.forEach(function (livre) {
+                    table.appendChild(createRow(livre));
+                    count++;
+                });
+
+                // Réactiver le lazy-load des images pour les lignes injectées
+                if (typeof initLazyLoad === "function") initLazyLoad();
+
+                // UI
+                if (nombreTitresElement) nombreTitresElement.innerHTML = count + " titre(s) trouvé(s)";
+                if (noRes)   noRes.style.display   = (count > 0) ? 'none' : 'block';
+                if (showAll) showAll.style.display = 'block';
+                return;
+            }
+
+            // --- CAS 2 : fallback DOM (si allLivres n'existe pas) ---
+            // ⚠️ Dans ce cas, on NE vide PAS la table : on filtre les lignes existantes.
+            var rows = table.getElementsByTagName('tr');
+            var countDOM = 0;
+            for (var i = 1; i < rows.length; i++) { // ignorer l'entête
+                var td = rows[i].getElementsByTagName('td')[1];
+                if (!td) continue;
+                var hay = norm(td.getAttribute('data2') || td.textContent || "");
+                var ok = words.every(function (w) { return hay.includes(w); });
+                rows[i].style.display = ok ? '' : 'none';
+                if (ok) countDOM++;
+            }
+            if (nombreTitresElement) nombreTitresElement.innerHTML = countDOM + " titre(s) trouvé(s)";
+            if (noRes)   noRes.style.display   = (countDOM > 0) ? 'none' : 'block';
+            if (showAll) showAll.style.display = 'block';
+        }
+        finally {
+            // Restaure le curseur
+            document.body.style.cursor = 'default';
+        }
+    }, 100);
+}
+				
+function rechercherMotcle() {
+    // Curseur d'attente
+    document.body.style.cursor = 'wait';
+    document.getElementById("searchInput").value = '';
+				
+document.getElementById("searchInputAuteur").value = '';
+document.getElementById("searchInputGenre").value = '';
+
+    setTimeout(function () {
+        try {
+            // --- Helpers (locaux à la fonction, n'impactent pas le reste) ---
+            function decodeEntities(str) {
+                if (!str) return "";
+                const txt = document.createElement('textarea');
+                txt.innerHTML = str; // décode &eacute;, &#233;, &#39;, etc.
+                return txt.value;
+            }
+            function removeAccents(str) {
+                return (str || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            }
+            function norm(str) {
+                // Décodage entités -> minuscules -> trim -> suppression accents
+                return removeAccents(decodeEntities(str || "").toLowerCase().trim());
+            }
+
+            // Récupération des éléments
+            var inputEl = document.getElementById('searchInputMotcle');
+            var table   = document.getElementById('tableLivres');
+            var nombreTitresElement = document.getElementById('nombreTitres');
+            var noRes   = document.getElementById('noResultMessage');
+            var showAll = document.getElementById('showAllButton');
+
+            if (!table) { console.error('tableLivres introuvable'); return; }
+
+            // Normaliser la requête utilisateur (accents + entités)
+            var q = norm(inputEl ? inputEl.value : "");
+
+            // Si la recherche est vide → revenir à l’affichage normal (chunks)
+            if (q === "") {
+                // fin du mode recherche
+                if (typeof window.searchActive === "undefined") window.searchActive = false;
+                window.searchActive = false;
+
+                // réinitialiser la table (on purge et on recharge le premier bloc)
+                while (table.rows.length > 1) table.deleteRow(1);
+                if (typeof currentIndex !== "undefined") currentIndex = 0;
+                if (typeof loadNextChunk === "function") loadNextChunk();
+
+                if (nombreTitresElement) {
+                    if (typeof allLivres !== "undefined" && Array.isArray(allLivres)) {
+                        nombreTitresElement.innerHTML = "Nombre de titres : " + allLivres.length;
+                    } else {
+                        // fallback : compter lignes DOM (hors entête)
+                        nombreTitresElement.innerHTML = "Nombre de titres : " + Math.max(0, table.rows.length - 1);
+                    }
+                }
+                if (noRes)  noRes.style.display  = 'none';
+                if (showAll) showAll.style.display = 'none';
+                return;
+            }
+
+            // Recherche non vide → activer le mode recherche (bloque l'injection au scroll)
+            if (typeof window.searchActive === "undefined") window.searchActive = true;
+            window.searchActive = true;
+
+            // Mots-clés normalisés (sans accents)
+            var words = q.split(/\s+/).filter(Boolean);
+
+            // --- CAS 1 : allLivres disponible (catalogue complet côté JS) ---
+            if (typeof allLivres !== "undefined" && Array.isArray(allLivres)) {
+                // Vider la table sauf l’entête
+                while (table.rows.length > 1) table.deleteRow(1);
+
+                var results = allLivres.filter(function (livre) {
+                    // auteur normalisés (décodage entités + accents)
+                    var hay = norm(livre.data || "");
+                    return words.every(function (w) { return hay.includes(w); });
+                });
+
+                // Injecter uniquement les résultats
+                var count = 0;
+                results.forEach(function (livre) {
+                    table.appendChild(createRow(livre));
+                    count++;
+                });
+
+                // Réactiver le lazy-load des images pour les lignes injectées
+                if (typeof initLazyLoad === "function") initLazyLoad();
+
+                // UI
+                if (nombreTitresElement) nombreTitresElement.innerHTML = count + " titre(s) trouvé(s)";
+                if (noRes)   noRes.style.display   = (count > 0) ? 'none' : 'block';
+                if (showAll) showAll.style.display = 'block';
+                return;
+            }
+
+            // --- CAS 2 : fallback DOM (si allLivres n'existe pas) ---
+            // ⚠️ Dans ce cas, on NE vide PAS la table : on filtre les lignes existantes.
+            var rows = table.getElementsByTagName('tr');
+            var countDOM = 0;
+            for (var i = 1; i < rows.length; i++) { // ignorer l'entête
+                var td = rows[i].getElementsByTagName('td')[1];
+                if (!td) continue;
+                var hay = norm(td.getAttribute('data') || td.textContent || "");
+                var ok = words.every(function (w) { return hay.includes(w); });
+                rows[i].style.display = ok ? '' : 'none';
+                if (ok) countDOM++;
+            }
+            if (nombreTitresElement) nombreTitresElement.innerHTML = countDOM + " titre(s) trouvé(s)";
+            if (noRes)   noRes.style.display   = (countDOM > 0) ? 'none' : 'block';
+            if (showAll) showAll.style.display = 'block';
+        }
+        finally {
+            // Restaure le curseur
+            document.body.style.cursor = 'default';
+        }
+    }, 100);
+}
+				
+function rechercherGenre() {
+    // Curseur d'attente
+    document.body.style.cursor = 'wait';
+ document.getElementById("searchInput").value = '';
+				
+document.getElementById("searchInputAuteur").value = '';
+
+    setTimeout(function () {
+        try {
+            // --- Helpers (locaux à la fonction, n'impactent pas le reste) ---
+            function decodeEntities(str) {
+                if (!str) return "";
+                const txt = document.createElement('textarea');
+                txt.innerHTML = str; // décode &eacute;, &#233;, &#39;, etc.
+                return txt.value;
+            }
+            function removeAccents(str) {
+                return (str || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            }
+            function norm(str) {
+                // Décodage entités -> minuscules -> trim -> suppression accents
+                return removeAccents(decodeEntities(str || "").toLowerCase().trim());
+            }
+
+            // Récupération des éléments
+            var inputEl = document.getElementById('searchInputGenre');
+            var table   = document.getElementById('tableLivres');
+            var nombreTitresElement = document.getElementById('nombreTitres');
+            var noRes   = document.getElementById('noResultMessage');
+            var showAll = document.getElementById('showAllButton');
+
+            if (!table) { console.error('tableLivres introuvable'); return; }
+
+            // Normaliser la requête utilisateur (accents + entités)
+            var q = norm(inputEl ? inputEl.value : "");
+
+            // Si la recherche est vide → revenir à l’affichage normal (chunks)
+            if (q === "") {
+                // fin du mode recherche
+                if (typeof window.searchActive === "undefined") window.searchActive = false;
+                window.searchActive = false;
+
+                // réinitialiser la table (on purge et on recharge le premier bloc)
+                while (table.rows.length > 1) table.deleteRow(1);
+                if (typeof currentIndex !== "undefined") currentIndex = 0;
+                if (typeof loadNextChunk === "function") loadNextChunk();
+
+                if (nombreTitresElement) {
+                    if (typeof allLivres !== "undefined" && Array.isArray(allLivres)) {
+                        nombreTitresElement.innerHTML = "Nombre de titres : " + allLivres.length;
+                    } else {
+                        // fallback : compter lignes DOM (hors entête)
+                        nombreTitresElement.innerHTML = "Nombre de titres : " + Math.max(0, table.rows.length - 1);
+                    }
+                }
+                if (noRes)  noRes.style.display  = 'none';
+                if (showAll) showAll.style.display = 'none';
+                return;
+            }
+
+            // Recherche non vide → activer le mode recherche (bloque l'injection au scroll)
+            if (typeof window.searchActive === "undefined") window.searchActive = true;
+            window.searchActive = true;
+
+            // Mots-clés normalisés (sans accents)
+            var words = q.split(/\s+/).filter(Boolean);
+
+            // --- CAS 1 : allLivres disponible (catalogue complet côté JS) ---
+            if (typeof allLivres !== "undefined" && Array.isArray(allLivres)) {
+                // Vider la table sauf l’entête
+                while (table.rows.length > 1) table.deleteRow(1);
+
+                var results = allLivres.filter(function (livre) {
+                    // auteur normalisés (décodage entités + accents)
+                    var hay = norm(livre.data5 || "");
+                    return words.every(function (w) { return hay.includes(w); });
+                });
+
+                // Injecter uniquement les résultats
+                var count = 0;
+                results.forEach(function (livre) {
+                    table.appendChild(createRow(livre));
+                    count++;
+                });
+
+                // Réactiver le lazy-load des images pour les lignes injectées
+                if (typeof initLazyLoad === "function") initLazyLoad();
+
+                // UI
+                if (nombreTitresElement) nombreTitresElement.innerHTML = count + " titre(s) trouvé(s)";
+                if (noRes)   noRes.style.display   = (count > 0) ? 'none' : 'block';
+                if (showAll) showAll.style.display = 'block';
+                return;
+            }
+
+            // --- CAS 2 : fallback DOM (si allLivres n'existe pas) ---
+            // ⚠️ Dans ce cas, on NE vide PAS la table : on filtre les lignes existantes.
+            var rows = table.getElementsByTagName('tr');
+            var countDOM = 0;
+            for (var i = 1; i < rows.length; i++) { // ignorer l'entête
+                var td = rows[i].getElementsByTagName('td')[1];
+                if (!td) continue;
+                var hay = norm(td.getAttribute('data5') || td.textContent || "");
+                var ok = words.every(function (w) { return hay.includes(w); });
+                rows[i].style.display = ok ? '' : 'none';
+                if (ok) countDOM++;
+            }
+            if (nombreTitresElement) nombreTitresElement.innerHTML = countDOM + " titre(s) trouvé(s)";
+            if (noRes)   noRes.style.display   = (countDOM > 0) ? 'none' : 'block';
+            if (showAll) showAll.style.display = 'block';
+        }
+        finally {
+            // Restaure le curseur
+            document.body.style.cursor = 'default';
+        }
+    }, 100);
+}
+				
+
+function afficherTout() {
+    var table = document.getElementById('tableLivres');
+    var nombreTitresElement = document.getElementById('nombreTitres');
+    var noRes   = document.getElementById('noResultMessage');
+    var showAll = document.getElementById('showAllButton');
+
+    // Désactiver le mode recherche
+    if (typeof window.searchActive === "undefined") window.searchActive = false;
+    window.searchActive = false;
+
+    // Purger le tableau sauf l’en-tête
+    while (table.rows.length > 1) {
+        table.deleteRow(1);
+    }
+
+    // Réinitialiser l’index pour le scroll infini
+    if (typeof currentIndex !== "undefined") currentIndex = 0;
+
+    // Recharger le premier bloc
+    if (typeof loadNextChunk === "function") {
+        loadNextChunk();
+    }
+
+    // Mettre à jour l’UI
+    if (nombreTitresElement) {
+        if (typeof allLivres !== "undefined" && Array.isArray(allLivres)) {
+            nombreTitresElement.innerHTML = "Nombre de titres : " + allLivres.length;
+        } else {
+            nombreTitresElement.innerHTML = "Nombre de titres : " + Math.max(0, table.rows.length - 1);
+        }
+    }
+    if (noRes)   noRes.style.display   = 'none';
+    if (showAll) showAll.style.display = 'none';
+}
+
+                
+</script>
+</head>
+<body>
+<div style="position: relative; width: 100%;">
+	<div class="hero-section">
+<div class='header'><h1>Parcourez la bibliothèque En Roue Livre !</h1></div></div>
+<span class="no-mobile" style = "position: absolute; right: 0; top: 50%; transform: translateY(-50%);font-size: 25px;"><a href="#down" style="text-decoration: none; color: #000000;">&#8681;</A>&nbsp</span></div>
+<br>
+<input type='search' id='searchInput' style='width:418px;' placeholder='Rechercher par Titre...'/>
+<button id='searchButton' class='btn1' onclick='rechercherTitre()' style='width:50px;'><span style="font-size:14px;">&#128269;</span></button>
+<br><br>
+<input type='search' title='séparer les différents auteurs par un espace' id='searchInputAuteur' style='width:418px;' placeholder='Rechercher par Auteur...'/>
+<button title='séparer les différents auteurs par un espace' id='searchButtonAuteur' class='btn1' onclick='rechercherAuteur()' style='width:50px;'><span style="font-size:14px;">&#128269;</span></button>
+<br><br>
+<input type='search' title='séparer les genres par un espace' id='searchInputGenre' style='width:418px;' placeholder='Rechercher par Genre...'/>
+<button title='séparer les genres par un espace' id='searchButtonGenre' class='btn1' onclick='rechercherGenre()' style='width:50px;'><span style="font-size:14px;">&#128269;</span></button>
+<div id='noResultMessage' style='display:none;font-weight:bold; color:red;'><br>Pas de résultat</div>
+<table id='tableLivres' border='1'>
+<tr><td>Couverture</td><td id='detail_titre' onclick='toggleAllDetails()' style='cursor:pointer;'>Titre / Auteur(s)</td></tr>
+<tr>
+</tr>
+<tr>
+</tr>
+<h3 id='nombreTitres'>Nombre de titres : 1355</h3>
+<button id='showAllButton' onclick='afficherTout()' class='btn1' style='display:none;width:160px;'>Afficher tout</button>
+&nbsp;&nbsp;<h2><span style='text-align: right;'>Catalogue g&eacute;n&eacute;r&eacute; avec <a href="https://www.soft-creation.fr/MesLivresPro.html" target="_blank" class="linksite">Mes Livres Pro</a></span></h2>
+</table>
+<br>
+<div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+  <span style="flex: 0 0 auto;"><span style="font-size: 24px;">&nbsp;&nbsp;&nbsp;<a href="#top" style="text-decoration: none; color: #000000;">&#8679;</A></span></span>
+  <h2><span style="flex: 1; text-align: center;">Catalogue g&eacute;n&eacute;r&eacute; avec <a href="https://www.soft-creation.fr/MesLivresPro.html" target="_blank" class="linksite">Mes Livres Pro</a></span></h2>
+  <span style="flex: 0 0 auto;"><span style="font-size: 24px;">&nbsp;&nbsp;&nbsp;<a href="#top" style="text-decoration: none; color: #000000;">&#8679;</A></span></span>
+</div>
+<br>
+<A NAME="down"></A>
+<script>
+
+    document.getElementById('searchInput').addEventListener('keydown', function(event) {
+        if (event.key === 'Enter') {
+            document.getElementById('searchButton').click();
+        }
+    });
+
+
+    document.getElementById('searchInputAuteur').addEventListener('keydown', function(event) {
+        if (event.key === 'Enter') {
+            document.getElementById('searchButtonAuteur').click();
+        }
+    });
+
+
+    document.getElementById('searchInputGenre').addEventListener('keydown', function(event) {
+        if (event.key === 'Enter') {
+            document.getElementById('searchButtonGenre').click();
+        }
+    });
+
+</script>
+<script>
+function updateButtonLabel() {
+  var btn = document.getElementById('searchButton');
+  if (window.innerWidth > 1020) {
+    btn.textContent = 'Rechercher Titre';
+    btn.style.width = '180px';
+  } else {
+    btn.innerHTML = '<span style="font-size:14px;">&#128269;</span>';
+    btn.style.width = '50px';
+  }
+}
+window.addEventListener('load', updateButtonLabel);
+window.addEventListener('resize', updateButtonLabel);
+</script>
+<script>
+function updateButtonLabel() {
+  var btn = document.getElementById('searchButtonAuteur');
+  if (window.innerWidth > 1020) {
+    btn.textContent = 'Rechercher par Auteur';
+    btn.style.width = '180px';
+  } else {
+    btn.innerHTML = '<span style="font-size:14px;">&#128269;</span>';
+    btn.style.width = '50px';
+  }
+}
+window.addEventListener('load', updateButtonLabel);
+window.addEventListener('resize', updateButtonLabel);
+</script>
+<script>
+function updateButtonLabel() {
+  var btn = document.getElementById('searchButtonMotcle');
+  if (window.innerWidth > 1020) {
+    btn.textContent = 'Rechercher par Mots clés';
+    btn.style.width = '180px';
+  } else {
+    btn.innerHTML = '<span style="font-size:14px;">&#128269;</span>';
+    btn.style.width = '50px';
+  }
+}
+window.addEventListener('load', updateButtonLabel);
+window.addEventListener('resize', updateButtonLabel);
+</script>
+<script>
+function updateButtonLabel() {
+  var btn = document.getElementById('searchButtonGenre');
+  if (window.innerWidth > 1020) {
+    btn.textContent = 'Rechercher par Genre';
+    btn.style.width = '180px';
+  } else {
+    btn.innerHTML = '<span style="font-size:14px;">&#128269;</span>';
+    btn.style.width = '50px';
+  }
+}
+window.addEventListener('load', updateButtonLabel);
+window.addEventListener('resize', updateButtonLabel);
+</script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const lazyImages = document.querySelectorAll('img.lazyload');
+        if ('IntersectionObserver' in window) {
+            const observer = new IntersectionObserver(entries => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const img = entry.target;
+                        const src = img.getAttribute('data-src');
+                        if (src) {
+                            img.src = src;
+                            img.removeAttribute('data-src');
+                        }
+                        observer.unobserve(img);
+                    }
+                });
+            });
+            lazyImages.forEach(img => observer.observe(img));
+        } else {
+            lazyImages.forEach(img => {
+                const src = img.getAttribute('data-src');
+                if (src) {
+                    img.src = src;
+                    img.removeAttribute('data-src');
+                }
+            });
+        }
+    });
+    </script>
+ <script>
  const allLivres = [
 {id: `titre_1`, img:'./Images/image_1_1867576.jpg', display: `<b>#&#201;thique et Responsable</b><BR>Monsieur Le Prof`, titre: `#&#201;thique et Responsable`,data1:`#&#201;thique et Responsable`,data2:`Monsieur Le Prof`,data3:`9782081428416`,data4:`2018`,data5:`Bandes dessin&#233;es`,data6:`PRETE A EN ROUE LIVRE PAR NOEMIE VU VAN
 
@@ -2106,214 +2757,163 @@ loadNextChunk();
    }
   });
  </script>
+<script>4.1
+window.addEventListener('load', function() {
 
-<!-- SCRIPT PRINCIPAL -->
-<script>
-let detailsVisible = false;
-let searchActive = false;
-let currentIndex = 0;
-const CHUNK_SIZE = 50;
-
-/* ---------- HELPERS ---------- */
-function decode(str){
-  const t = document.createElement("textarea");
-  t.innerHTML = str || "";
-  return t.value;
-}
-function norm(str){
-  return decode(str).toLowerCase().trim().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
-}
-
-/* ---------- TOGGLE DETAILS ---------- */
-function toggleDetails(id){
-  const el = document.getElementById(id);
-  if(!el) return;
-
-  const expanded = el.dataset.expanded === "true";
-  if(expanded){
-    el.innerHTML = el.dataset.display;
-    el.dataset.expanded = "false";
-  } else {
-    el.innerHTML =
-      `<b>Titre :</b> ${el.dataset.title}<br>
-       <b>Auteur(s) :</b> ${el.dataset.auteur}<br>
-       <b>ISBN :</b> ${el.dataset.isbn}<br>
-       <b>Année :</b> ${el.dataset.annee}<br>
-       <b>Genre :</b> ${el.dataset.genre}<br>
-       <b>Résumé :</b> ${el.dataset.resume}`;
-    el.dataset.expanded = "true";
-  }
-}
-
-function toggleAllDetails(){
-  document.querySelectorAll("[id^='titre_']").forEach(td=>{
-    if(detailsVisible !== (td.dataset.expanded==="true")){
-      toggleDetails(td.id);
+    function isRunningOniOS() {
+        return (
+            /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+            (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+        );
     }
-  });
-  detailsVisible = !detailsVisible;
-  const headerCell = document.getElementById("detail_titre");
-  if(headerCell) headerCell.textContent = detailsVisible ? "Détails" : "Titre / Auteur(s)";
-}
 
-/* ---------- CREATION LIGNE ---------- */
-function createRow(livre){
-  const tr = document.createElement("tr");
-  const titre = decode(livre.titre || "");
-  const auteur = decode(livre.data2 || "");
-  const genre = decode(livre.data5 || "");
-  const resume = decode(livre.data6 || "");
+    function detectBrowser() {
+        const ua = navigator.userAgent;
 
-  tr.innerHTML = `
-    <td class="col-image">
-      <img class="lazyload" data-src="${livre.img}" alt="">
-    </td>
-    <td class="clickable"
-        id="${livre.id}"
-        data-expanded="false"
-        data-display="${livre.display}"
-        data-title="${titre}"
-        data-auteur="${auteur}"
-        data-isbn="${livre.data3 || ""}"
-        data-annee="${livre.data4 || ""}"
-        data-genre="${genre}"
-        data-resume="${resume}"
-        onclick="toggleDetails('${livre.id}')">
-        ${livre.display}
-    </td>`;
-  return tr;
-}
+        if (/CriOS/i.test(ua)) return 'chrome';       // Chrome iOS
+        if (/EdgiOS/i.test(ua)) return 'edge';        // Edge iOS
+        if (/FxiOS/i.test(ua)) return 'firefox';      // Firefox iOS
+        if (/Brave/i.test(ua)) return 'brave';        // Brave iOS 
+        if (/DuckDuckGo/i.test(ua)) return 'duck';    // DuckDuckGo
+        if (/Safari/i.test(ua) && !/CriOS|FxiOS|EdgiOS/i.test(ua)) return 'safari';
+        return 'autre';
+    }
 
-/* ---------- LAZY LOAD ---------- */
-let lazyObserver = null;
-function initLazyLoad(){
-  const imgs = document.querySelectorAll("img.lazyload");
-  if(!imgs.length) return;
 
-  // réutilise un seul observer
-  if(!lazyObserver && "IntersectionObserver" in window){
-    lazyObserver = new IntersectionObserver(entries=>{
-      entries.forEach(e=>{
-        if(e.isIntersecting){
-          const img=e.target;
-          img.src = img.dataset.src;
-          img.classList.remove("lazyload");
-          lazyObserver.unobserve(img);
+    if (!isRunningOniOS()) return; // uniquement sur iOS/iPadOS
+
+    const browser = detectBrowser();
+
+    // --- Vérifie si le préchargement a déjà été terminé ---
+    const preloadState = localStorage.getItem('cataloguePreloadState');
+    const preloadCount = parseInt(localStorage.getItem('cataloguePreloadCount') || '0', 10);
+
+    // Si le préchargement est marqué  timestamp et qu'on a déjà chargé un grand nombre d'images → on ne relance pas
+    if (preloadState === '1867576' && preloadCount > 100) {
+        console.log('Préchargement complet déjà effectué — script ignoré.');
+        return;
+    }
+
+    // --- Étape 1 : charger toutes les tranches ---
+    function loadAllChunks(callback) {
+        if (typeof loadNextChunk !== 'function') { callback(); return; }
+
+        function loadUntilDone() {
+            if (typeof currentIndex === 'undefined' || typeof allLivres === 'undefined') {
+                callback(); return;
+            }
+            if (currentIndex >= allLivres.length) {
+                callback(); return;
+            }
+            loadNextChunk();
+            setTimeout(loadUntilDone, 100);
         }
-      });
-    });
-  }
+        loadUntilDone();
+    }
 
-  if(lazyObserver){
-    imgs.forEach(i=>lazyObserver.observe(i));
-  } else {
-    // fallback
-    imgs.forEach(img=>{
-      img.src = img.dataset.src;
-      img.classList.remove("lazyload");
-    });
-  }
-}
+    // --- Étape 2 : précharger toutes les images ---
+    function prechargerImages() {
+        const lazyImgs = document.querySelectorAll('img.lazyload');
+        const total = lazyImgs.length;
+        let i = 0;
+        const delay = 25;
 
-/* ---------- LOAD CHUNKS ---------- */
-function loadNextChunk(){
-  if(searchActive) return;
-  const table = document.getElementById("tableLivres");
-  if(!table) return;
+        // marque le début du préchargement
+        localStorage.setItem('cataloguePreloadState', 'en_cours');
+        localStorage.setItem('cataloguePreloadCount', total.toString());
 
-  const end = Math.min(currentIndex + CHUNK_SIZE, allLivres.length);
-  for(let i=currentIndex;i<end;i++) {
-    table.appendChild(createRow(allLivres[i]));
-  }
-  currentIndex = end;
-  initLazyLoad();
-}
+    // --- Rafraîchissement automatique une seule fois ---
+    if (!sessionStorage.getItem('catalogueRefreshed')) {
+    sessionStorage.setItem('catalogueRefreshed', '1');
+    location.reload();
+    return;
+    }
 
-/* ---------- SEARCH ---------- */
-function searchBase(input, field){
-  const table = document.getElementById("tableLivres");
-  const nombreTitres = document.getElementById("nombreTitres");
-  const noResultMessage = document.getElementById("noResultMessage");
-  const showAllButton = document.getElementById("showAllButton");
+        // Affichage du compteur
+        const info = document.createElement('div');
+        info.id = 'imgProgress';
+        info.style.position = 'fixed';
+        info.style.top = '10px';
+        info.style.right = '10px';
+        info.style.background = 'rgba(80,40,134,0.9)';
+        info.style.color = 'white';
+        info.style.padding = '8px 12px';
+        info.style.borderRadius = '10px';
+        info.style.fontFamily = 'Arial, sans-serif';
+        info.style.fontSize = '13px';
+        info.style.zIndex = '999999';
+        info.textContent = 'Préchargement des images : 0 / ' + total;
+        document.body.appendChild(info);
 
-  const q = norm(input.value);
-  searchActive = q !== "";
+        function chargerSuivante() {
+            if (i >= total) {
+                info.style.top = '80px';
+    
+    
+                //info.innerHTML = 'Ajoutez cette page à l\'écran d\'accueil pour<br>conserver un accès après déconnexion du PC';
+                // ✅ Message différent selon le navigateur
+                 let msg = '';
+                switch (browser) {
+                    case 'safari':
+                        msg = 'Sur Safari, ajoutez cette page <b>aux favoris</b> pour<br>conserver un accès après déconnexion du PC';
+                        break;
+                    case 'chrome':
+                        msg = 'Sur Chrome, ajoutez cette page à <b>l\'écran d\'accueil</b> pour<br>conserver un accès après déconnexion du PC';
+                        break;
+                    case 'edge':
+                    case 'brave':
+                        msg = 'Sur Brave ou Edge, ajoutez cette page <b>aux favoris</b> pour<br>conserver un accès après déconnexion du PC';
+                        break;
+                    case 'firefox':
+                        msg = 'Sur Firefox, ajoutez cette page <b>aux favoris</b> pour<br>un accès hors connexion';
+                        break;
+                    case 'duck':
+                        msg = '⚠️ Le navigateur DuckDuckGo efface le cache,<br>utilisez Safari ou Chrome pour un accès hors connexion.';
+                        break;
+                    default:
+                        msg = 'ajoutez cette page <b>à vos favoris</b> pour<br>un accès hors connexion.';
+                        break;
+                }
+				
+				info.innerHTML = msg;
 
-  // purge la table sauf l'entête
-  table.querySelectorAll("tr:not(:first-child)").forEach(r=>r.remove());
 
-  let results = q ? allLivres.filter(l=>norm(l[field] || "").includes(q)) : allLivres;
 
-  results.forEach(l=>table.appendChild(createRow(l)));
-  initLazyLoad();
 
-  if(nombreTitres) nombreTitres.textContent = `Nombre de titres : ${results.length}`;
-  if(noResultMessage) noResultMessage.style.display = results.length ? "none":"block";
-  if(showAllButton) showAllButton.style.display = q ? "inline-block":"none";
-}
+                localStorage.setItem('cataloguePreloadState', '1867576'); // ✅ marqué comme fini
+                setTimeout(() => info.remove(), 12000);// garder le message affiché pendant 12 secondes
+                return;
+            }
+            const img = lazyImgs[i++];
+            if (img.dataset.src && !img.src) {
+                img.src = img.dataset.src;
+                img.removeAttribute('data-src');
+            }
+            info.textContent = 'Préchargement des images : ' + i + ' / ' + total;
+            setTimeout(chargerSuivante, delay);
+        }
 
-function rechercherTitre(){ 
-  document.getElementById("searchInputAuteur").value = "";
-  document.getElementById("searchInputGenre").value = "";
-  searchBase(document.getElementById("searchInput"), "titre");
-}
-function rechercherAuteur(){
-  document.getElementById("searchInput").value = "";
-  document.getElementById("searchInputGenre").value = "";
-  searchBase(document.getElementById("searchInputAuteur"), "data2");
-}
-function rechercherGenre(){
-  document.getElementById("searchInput").value = "";
-  document.getElementById("searchInputAuteur").value = "";
-  searchBase(document.getElementById("searchInputGenre"), "data5");
-}
+        chargerSuivante();
+    }
 
-function afficherTout(){
-  const table = document.getElementById("tableLivres");
-  const nombreTitres = document.getElementById("nombreTitres");
-  const noResultMessage = document.getElementById("noResultMessage");
-  const showAllButton = document.getElementById("showAllButton");
+    // --- Étape 3 : exécution séquentielle ---
+     // --- Ne lancer le script que si le catalogue contient plus de 100 fiches ---
+    const totalImgs = document.querySelectorAll('img.lazyload').length;
+    if (totalImgs <= 100) {
+        console.log('Catalogue léger (' + totalImgs + ' fiches) — préchargement ignoré.');
+        return;
+    }
+    loadAllChunks(prechargerImages);
 
-  searchActive = false;
-  currentIndex = 0;
-
-  table.querySelectorAll("tr:not(:first-child)").forEach(r=>r.remove());
-  loadNextChunk();
-
-  if(nombreTitres) nombreTitres.textContent = `Nombre de titres : ${allLivres.length}`;
-  if(showAllButton) showAllButton.style.display = "none";
-  if(noResultMessage) noResultMessage.style.display = "none";
-}
-
-/* ---------- INFINITE SCROLL ---------- */
-function onScroll(){
-  if(searchActive) return;
-  if(currentIndex >= allLivres.length) return;
-
-  const nearBottom = (window.innerHeight + window.scrollY) >= (document.body.offsetHeight - 600);
-  if(nearBottom) loadNextChunk();
-}
-
-/* ---------- INIT ---------- */
-window.addEventListener("load", ()=>{
-  // boutons
-  document.getElementById("searchButton").addEventListener("click", rechercherTitre);
-  document.getElementById("searchButtonAuteur").addEventListener("click", rechercherAuteur);
-  document.getElementById("searchButtonGenre").addEventListener("click", rechercherGenre);
-  document.getElementById("showAllButton").addEventListener("click", afficherTout);
-  document.getElementById("detail_titre").addEventListener("click", toggleAllDetails);
-
-  // Enter dans les champs
-  document.getElementById("searchInput").addEventListener("keydown", (e)=>{ if(e.key==="Enter") rechercherTitre(); });
-  document.getElementById("searchInputAuteur").addEventListener("keydown", (e)=>{ if(e.key==="Enter") rechercherAuteur(); });
-  document.getElementById("searchInputGenre").addEventListener("keydown", (e)=>{ if(e.key==="Enter") rechercherGenre(); });
-
-  // init UI
-  document.getElementById("nombreTitres").textContent = `Nombre de titres : ${allLivres.length}`;
-  loadNextChunk();
-  window.addEventListener("scroll", onScroll);
 });
 </script>
 
+
 </body>
 </html>
+
+
+
+
+
+
