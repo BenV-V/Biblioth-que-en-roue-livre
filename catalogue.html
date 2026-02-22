@@ -2360,7 +2360,7 @@ const genres = Array.from(set).sort((a, b) =>
   genres.forEach(g => {
     const opt = document.createElement('option');
     opt.value = g;
-    opt.textContent = g;
+    opt.textContent = decodeHtml(g);
     sel.appendChild(opt);
   });
 }
@@ -2438,6 +2438,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 </body>
 </html>
+
 
 
 
