@@ -1,62 +1,63 @@
-/* TITRE DISCRET (sans cadre) */
+/* PALETTE ASSO-LA-CÔTE : FUCHSIA + TURQUOISE + CRÈME */
+:root {
+  --primary: #e91e63;      /* Rose fuchsia logo */
+  --secondary: #00bcd4;    /* Turquoise cœur */
+  --bg-cream: #faf7f2;     /* Beige fond */
+  --text-dark: #2c3e50;
+}
+
+body {
+  background: linear-gradient(135deg, var(--bg-cream) 0%, #f5f2ef 100%) !important;
+  color: var(--text-dark) !important;
+}
+
+/* TITRE FUCHSIA */
 h1 {
-  margin-top: 30px !important;
-  margin-bottom: 60px !important;
-  padding: 0 !important;              /* SUPPRIMÉ cadre */
-  color: #b85c38 !important;          /* Rouille chaleureux */
-  font-size: 2.4em !important;
-  text-align: center !important;
-  font-weight: 600 !important;
-  letter-spacing: 0.5px !important;
+  color: var(--primary) !important;
+  margin-top: 25px !important;
+  margin-bottom: 55px !important;
+  font-size: 2.3em !important;
+  text-shadow: 1px 1px 2px rgba(233,30,99,0.3) !important;
 }
 
-/* CARTES LIVRES ÉPURÉES (sans contour moche) */
+/* CARTES LIVRES ÉPURÉES TURQUOISE */
 img {
-  background: #fafaf7 !important;     /* Beige ultra-doux */
-  padding: 12px !important;           /* Marge interne clean */
-  border-radius: 16px !important;
+  background: white !important;
+  padding: 15px !important;
+  border-radius: 20px !important;
   box-shadow: 
-    0 8px 28px rgba(184,92,56,0.12),  /* Ombre rouille subtile */
-    0 2px 8px rgba(0,0,0,0.06) !important;
-  margin: 22px !important;
-  border: none !important;            /* SUPPRIMÉ contour */
-  position: relative !important;
-}
-
-img::before {                       /* Effet "couverture" subtil */
-  content: '';
-  position: absolute;
-  top: 8px;
-  left: 8px;
-  right: 8px;
-  bottom: 8px;
-  background: rgba(212,165,116,0.1); /* Ocre transparent */
-  border-radius: 12px;
-  z-index: 0;
-  pointer-events: none;
+    0 12px 35px rgba(0,188,212,0.15),  /* Turquoise doux */
+    0 4px 15px rgba(0,0,0,0.08) !important;
+  margin: 20px !important;
+  border: 2px solid transparent !important;
+  background-clip: padding-box !important;
 }
 
 img:hover {
-  transform: translateY(-8px) !important;
   box-shadow: 
-    0 20px 45px rgba(184,92,56,0.25),
-    0 0 0 1px rgba(138,154,123,0.3) !important; /* Bordure vert sauge */
+    0 25px 50px rgba(233,30,99,0.25),   /* Fuchsia glow */
+    0 0 0 4px rgba(0,188,212,0.4) !important; /* Bordure turquoise */
+  transform: translateY(-10px) scale(1.03) !important;
 }
 
-/* RECHERCHE harmonisée */
+/* RECHERCHE FUCHSIA/TURQUOISE */
 form {
-  background: linear-gradient(135deg, #fafaf7 0%, #f5f2e9 100%) !important;
-  border: 1px solid #d4a574 !important;  /* Ocre fin */
-  box-shadow: 0 10px 30px rgba(184,92,56,0.08) !important;
+  background: rgba(255,255,255,0.95) !important;
+  border: 2px solid var(--secondary) !important;
+  box-shadow: 0 15px 40px rgba(233,30,99,0.1) !important;
 }
 
 button {
-  background: linear-gradient(135deg, #b85c38, #d4a574) !important;
-  border: 2px solid #8a9a7b !important;  /* Vert sauge */
+  background: linear-gradient(135deg, var(--primary), #c2185b) !important;
+  border: 2px solid var(--secondary) !important;
 }
 
-/* Mobile */
-@media (max-width: 768px) {
-  h1 { margin-bottom: 40px !important; font-size: 2em !important; }
-  img { margin: 18px !important; padding: 10px !important; }
+button:hover {
+  background: linear-gradient(135deg, var(--secondary), #00acc1) !important;
+  transform: scale(1.05) !important;
+}
+
+input:focus {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 10px rgba(233,30,99,0.3) !important;
 }
