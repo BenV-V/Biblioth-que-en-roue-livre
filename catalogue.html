@@ -2356,24 +2356,35 @@ function splitGenres(raw) {
 /* Filtre les valeurs "pourries" */
 function isValidGenreLabel(label) {
   const s = (label || "").replace(/\s+/g, " ").trim();
-  if (s.length < 4) return false;                 // vire "Mé", "Thé", "té", "SF" etc.
-  if (/^[&]+$/.test(s)) return false;             // "&" seul
+  if (s.length < 4) return false;
+  if (/^[&]+$/.test(s)) return false;
   if (/[<>]/.test(s)) return false;
 
   // UUID / hash
   if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i.test(s)) return false;
   if (/^[0-9a-f]{20,}$/i.test(s)) return false;
 
-  // morceaux "cassés" typiques
-  if (/[&]$/.test(s)) return false;               // "sociologie &"
-  if (/^[a-zà-ÿ]{1,3}$/i.test(s)) return false;   // "té", "tique" etc.
+  // finit par & (ex: "sociologie &")
+  if (/[&]$/.test(s)) return false;
 
-  // finit par une préposition/bout de mot trop suspect
-  if (/\b(et|de|des|du|la|le|les|d')$/i.test(s)) return false;
+  // morceaux trop "mots-seuls"
+  if (/^[a-zà-ÿ]{1,3}$/i.test(s)) return false;
+
+  // fin suspecte (tronquée)
+  if (/\b(et|de|des|du|la|le|les|d'|à|a)\s*$/i.test(s)) return false;
+  if (/[…,:;]\s*$/.test(s)) return false;
+
+  // fin par lettre accentuée seule (souvent "vidé", "encyclopé", "litté")
+  // -> si le mot final fait <= 4 et contient un accent, on jette
+  const last = s.split(" ").pop() || "";
+  if (last.length <= 4 && /[àâäéèêëîïôöùûüç]/i.test(last)) return false;
 
   return true;
 }
-
+function singularKey(key) {
+  // normalisation très simple : enlève un 's' final (pas sur 'ss')
+  return key.endsWith("s") && !key.endsWith("ss") ? key.slice(0, -1) : key;
+}
 function buildGenreSelect() {
   const sel = document.getElementById("genreSelect");
   if (!sel || !Array.isArray(allLivres)) return;
@@ -2401,16 +2412,34 @@ const labels = new Map();   // key -> meilleur libellé
   });
 
   // Tri par label (fr, insensible aux accents)
-  const entries = Array.from(labels.entries())
-  .filter(([key]) => (counts.get(key) || 0) >= 2) // ✅ garde seulement si apparaît >= 2
-  .sort((a, b) => a[1].localeCompare(b[1], "fr", { sensitivity: "base" }));
+// Regroupe singulier/pluriel + filtre les libellés tronqués
+const grouped = new Map(); // skey -> { label, count }
 
-  entries.forEach(([key, label]) => {
-    const opt = document.createElement("option");
-    opt.value = key;          // ✅ valeur = clé normalisée
-    opt.textContent = label;  // ✅ affichage = label joli
-    sel.appendChild(opt);
-  });
+labels.forEach((label, key) => {
+  if (!isValidGenreLabel(label)) return;
+
+  const skey = singularKey(key);
+  const c = counts.get(key) || 0;
+
+  if (!grouped.has(skey)) {
+    grouped.set(skey, { label, count: c });
+  } else {
+    const cur = grouped.get(skey);
+    if (label.length > cur.label.length) cur.label = label; // garde le plus complet
+    cur.count += c;
+  }
+});
+
+const entries = Array.from(grouped.entries())
+  .filter(([, obj]) => obj.count >= 2) // garde seulement si apparaît >= 2
+  .sort((a, b) => a[1].label.localeCompare(b[1].label, "fr", { sensitivity: "base" }));
+
+entries.forEach(([key, obj]) => {
+  const opt = document.createElement("option");
+  opt.value = key;
+  opt.textContent = obj.label;
+  sel.appendChild(opt);
+});
 }
 
 function rechercherGenreDepuisSelect() {
@@ -2486,4 +2515,5 @@ document.addEventListener("DOMContentLoaded", function () {
 </script>
   </body> 
 </html>
+
 
