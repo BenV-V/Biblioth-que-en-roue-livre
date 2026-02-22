@@ -2338,7 +2338,12 @@ function splitGenres(raw) {
     .map(g => g.trim())
     .filter(Boolean);
 }
-
+   
+function decodeHtml(str) {
+  const txt = document.createElement("textarea");
+  txt.innerHTML = str || "";
+  return txt.value;
+}
 function buildGenreSelect() {
   const sel = document.getElementById('genreSelect');
   if (!sel || !Array.isArray(allLivres)) return;
@@ -2438,6 +2443,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 </body>
 </html>
+
 
 
 
