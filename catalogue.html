@@ -39,7 +39,15 @@
           <span style="font-size:14px;">&#128269;</span>
         </button>
       </div>
+<div class="search-grid">
+  <select id="genreSelect" onchange="rechercherGenreDepuisSelect()" aria-label="Filtrer par genre">
+    <option value="">— Tous les genres —</option>
+  </select>
 
+  <button id="resetGenreButton" class="btn-secondary" onclick="resetGenreSelect()">
+    Effacer
+  </button>
+</div>
       <div class="search-grid">
         <input type="search" id="searchInputGenre" title="Séparer les genres par un espace" placeholder="Rechercher par Genre..." />
         <button id="searchButtonGenre" class="btn1" onclick="rechercherGenre()" style="width:50px;" aria-label="Rechercher par genre">
@@ -2308,6 +2316,99 @@ loadNextChunk();
   document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') resetRecherche();
 });
+   function normalizeGenre(s) {
+  return (s || '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/* Essaie de séparer proprement si certains livres ont plusieurs genres */
+function splitGenres(raw) {
+  const s = normalizeGenre(raw);
+  if (!s) return [];
+  return s
+    .split(/[,;/|]+/)          // , ; / |
+    .map(g => normalizeGenre(g))
+    .filter(Boolean);
+}
+
+function buildGenreSelect() {
+  const sel = document.getElementById('genreSelect');
+  if (!sel || !Array.isArray(allLivres)) return;
+
+  // Collecte des genres uniques
+  const set = new Set();
+  allLivres.forEach(l => {
+    const raw = l.data5 || '';
+    splitGenres(raw).forEach(g => set.add(g));
+  });
+
+  // Tri alphabétique (insensible aux accents)
+  const genres = Array.from(set).sort((a, b) =>
+    a.localeCompare(b, 'fr', { sensitivity: 'base' })
+  );
+
+  // Remplissage
+  // (On garde la 1ère option "Tous les genres")
+  genres.forEach(g => {
+    const opt = document.createElement('option');
+    opt.value = g;
+    opt.textContent = g;
+    sel.appendChild(opt);
+  });
+}
+
+function rechercherGenreDepuisSelect() {
+  const sel = document.getElementById('genreSelect');
+  if (!sel) return;
+
+  const chosen = sel.value;
+  // vide les autres champs si tu veux éviter les filtres cumulés
+  const t = document.getElementById('searchInput'); if (t) t.value = '';
+  const a = document.getElementById('searchInputAuteur'); if (a) a.value = '';
+  const g = document.getElementById('searchInputGenre'); if (g) g.value = '';
+
+  if (!chosen) {
+    // “Tous les genres”
+    if (typeof afficherTout === 'function') afficherTout();
+    return;
+  }
+
+  // Filtre
+  searchActive = true;
+  const table = document.getElementById('tableLivres');
+  const countEl = document.getElementById('nombreTitres');
+  const noRes = document.getElementById('noResultMessage');
+  const showAll = document.getElementById('showAllButton');
+
+  if (!table) return;
+  while (table.rows.length > 1) table.deleteRow(1);
+
+  let count = 0;
+  allLivres.forEach(livre => {
+    const genresLivre = splitGenres(livre.data5 || '');
+    if (genresLivre.includes(chosen)) {
+      table.appendChild(createRow(livre));
+      count++;
+    }
+  });
+
+  if (typeof initLazyLoad === "function") initLazyLoad();
+  if (countEl) countEl.innerHTML = count + " titre(s) trouvé(s)";
+  if (noRes) noRes.style.display = count ? 'none' : 'block';
+  if (showAll) showAll.style.display = 'block';
+}
+
+function resetGenreSelect() {
+  const sel = document.getElementById('genreSelect');
+  if (sel) sel.value = '';
+  if (typeof afficherTout === 'function') afficherTout();
+}
+
+/* Construire la liste au chargement */
+document.addEventListener('DOMContentLoaded', () => {
+  buildGenreSelect();
+});
  </script>
 
   <!-- ✅ petit bonus : la touche Entrée (si ton script original ne le fait pas déjà) -->
@@ -2330,6 +2431,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 </body>
 </html>
+
 
 
 
