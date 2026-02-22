@@ -1,63 +1,45 @@
-/* TITRE + PHOTOALBUS ULTRA-CLEAN */
-.hero-title {
-  position: relative;
-  margin: 30px auto 60px;
-  padding: 60px 30px;
-  text-align: center;
-  background: 
-    rgba(250,247,242,0.92),              /* Crème 92% opaque */
-    url('photoalbus.jpg') center/cover;  /* Votre image */
-  border-radius: 22px;
-  box-shadow: 0 15px 45px rgba(0,0,0,0.12);
-  backdrop-filter: blur(5px);            /* Effet verre dépoli */
-  max-width: 900px;
-}
-
+/* TITRE AÉRÉ (SANS hero div) */
 h1 {
-  color: #e91e63 !important;
-  font-size: 2.5em;
-  font-weight: 700;
-  text-shadow: 1px 1px 3px rgba(255,255,255,0.8);
-  margin: 0;
-  position: relative;
-  z-index: 2;
+  margin-top: 50px !important;
+  margin-bottom: 80px !important;
+  padding: 25px 40px !important;
+  color: #e91e63 !important;     /* Fuchsia */
+  font-size: 2.4em !important;
+  text-align: center !important;
+  background: rgba(255,255,255,0.7) !important;
+  border-radius: 18px !important;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1) !important;
+  display: inline-block !important;
+  max-width: 700px !important;
 }
 
-/* CARTES LIVRES PREMIUM (sans contour) */
+/* CARTES LIVRES MINIMALISTES PROPRE */
 img {
-  background: linear-gradient(145deg, #ffffff, #f8f9fa) !important;
-  padding: 18px !important;
-  border-radius: 24px !important;
-  box-shadow: 
-    0 20px 60px rgba(0,0,0,0.12),
-    inset 0 1px 0 rgba(255,255,255,0.8);  /* Effet "gravé" */
-  margin: 25px !important;
+  background: #ffffff !important;
+  padding: 20px !important;
+  border-radius: 20px !important;
+  box-shadow: 0 15px 40px rgba(0,0,0,0.08) !important;
+  margin: 28px !important;
   border: none !important;
-  position: relative;
-  transform-style: preserve-3d;
 }
 
-img::after {                         /* Effet "pli dos livre" */
-  content: '';
-  position: absolute;
-  right: 12px;
-  top: 12px;
-  width: 4px;
-  height: 60px;
-  background: linear-gradient(to bottom, transparent, rgba(0,0,0,0.1));
-  border-radius: 2px;
-  transform: skew(-15deg);
-}
-
+/* HOVER SUBTIL */
 img:hover {
-  transform: translateY(-12px) rotateX(5deg) !important;
-  box-shadow: 
-    0 35px 80px rgba(233,30,99,0.25),
-    0 20px 40px rgba(0,188,212,0.15) !important;
+  transform: translateY(-8px) !important;
+  box-shadow: 0 25px 50px rgba(0,188,212,0.2) !important;
+}
+
+/* RECHERCHE clean */
+form {
+  background: rgba(255,255,255,0.95) !important;
+  border-radius: 25px !important;
+  padding: 30px !important;
+  box-shadow: 0 12px 35px rgba(0,0,0,0.1) !important;
+  margin-bottom: 60px !important;
 }
 
 /* Mobile */
 @media (max-width: 768px) {
-  .hero-title { padding: 40px 20px; margin-bottom: 40px; }
-  img { margin: 18px !important; padding: 14px !important; }
+  h1 { margin-top: 30px !important; margin-bottom: 50px !important; padding: 20px !important; font-size: 2em !important; }
+  img { margin: 20px !important; padding: 16px !important; }
 }
