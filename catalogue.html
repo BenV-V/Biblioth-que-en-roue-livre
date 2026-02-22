@@ -2321,85 +2321,121 @@ loadNextChunk();
     .replace(/\s+/g, ' ')
     .trim();
 }
+<script>
+/* =========================
+   Dropdown Genre - Version robuste
+   - Décodage entités HTML (&#233, &amp, etc.)
+   - Comparaison sans accents
+   - Nettoyage des valeurs parasites (UUID, &, lettres seules, etc.)
+   ========================= */
 
-/* Essaie de séparer proprement si certains livres ont plusieurs genres */
-function normalize(str) {
-  return (str || "")
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .trim();
-}
-
-function splitGenres(raw) {
-  if (!raw) return [];
-  return raw
-    .split(/[,;/|]+/)
-    .map(g => g.trim())
-    .filter(Boolean);
-}
-   
 function decodeHtml(str) {
   const txt = document.createElement("textarea");
   txt.innerHTML = str || "";
   return txt.value;
 }
+
+function normalizeKey(str) {
+  return decodeHtml(str || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "") // enlève accents
+    .replace(/[’]/g, "'")           // apostrophes uniformes
+    .replace(/\s+/g, " ")           // espaces propres
+    .trim();
+}
+
+/* Sépare si certains livres ont plusieurs genres */
+function splitGenres(raw) {
+  if (!raw) return [];
+  return String(raw)
+    .split(/[,;/|]+/) // séparateurs fréquents
+    .map(g => decodeHtml(g).replace(/\s+/g, " ").trim())
+    .filter(Boolean);
+}
+
+/* Filtre les valeurs "pourries" */
+function isValidGenreLabel(label) {
+  const s = (label || "").trim();
+  if (s.length < 2) return false;                 // trop court: "É", "é", etc.
+  if (/^[&]+$/.test(s)) return false;             // "&" seul
+  if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i.test(s)) return false; // UUID
+  if (/^[0-9a-f]{20,}$/i.test(s)) return false;   // hash long
+  if (/[<>]/.test(s)) return false;               // sécurité basique
+  return true;
+}
+
 function buildGenreSelect() {
-  const sel = document.getElementById('genreSelect');
+  const sel = document.getElementById("genreSelect");
   if (!sel || !Array.isArray(allLivres)) return;
 
-  // Collecte des genres uniques
-  const set = new Set();
+  // Nettoie les options existantes (sauf la 1ère "Tous les genres")
+  while (sel.options.length > 1) sel.remove(1);
+
+  // key normalisée -> label affiché
+  const map = new Map();
+
   allLivres.forEach(l => {
-    const raw = l.data5 || '';
-    splitGenres(raw).forEach(g => set.add(g));
+    const raw = l.data5 || "";
+    splitGenres(raw).forEach(label => {
+      if (!isValidGenreLabel(label)) return;
+
+      const key = normalizeKey(label);
+      if (!key) return;
+
+      // Si doublon, garde le libellé le plus "long" (souvent le plus complet)
+      if (!map.has(key) || label.length > map.get(key).length) {
+        map.set(key, label);
+      }
+    });
   });
 
-  // Tri alphabétique (insensible aux accents)
-const genres = Array.from(set).sort((a, b) =>
-  normalize(a).localeCompare(normalize(b))
-);
+  // Tri par label (fr, insensible aux accents)
+  const entries = Array.from(map.entries()).sort((a, b) =>
+    a[1].localeCompare(b[1], "fr", { sensitivity: "base" })
+  );
 
-  // Remplissage
-  // (On garde la 1ère option "Tous les genres")
-  genres.forEach(g => {
-    const opt = document.createElement('option');
-    opt.value = g;
-    opt.textContent = decodeHtml(g);
+  entries.forEach(([key, label]) => {
+    const opt = document.createElement("option");
+    opt.value = key;          // ✅ valeur = clé normalisée
+    opt.textContent = label;  // ✅ affichage = label joli
     sel.appendChild(opt);
   });
 }
 
 function rechercherGenreDepuisSelect() {
-  const sel = document.getElementById('genreSelect');
+  const sel = document.getElementById("genreSelect");
   if (!sel) return;
 
-  const chosen = sel.value;
-  // vide les autres champs si tu veux éviter les filtres cumulés
-  const t = document.getElementById('searchInput'); if (t) t.value = '';
-  const a = document.getElementById('searchInputAuteur'); if (a) a.value = '';
-  const g = document.getElementById('searchInputGenre'); if (g) g.value = '';
+  const chosenKey = sel.value;
 
-  if (!chosen) {
-    // “Tous les genres”
-    if (typeof afficherTout === 'function') afficherTout();
+  // Option : vider les autres champs pour éviter les filtres cumulés
+  const t = document.getElementById("searchInput"); if (t) t.value = "";
+  const a = document.getElementById("searchInputAuteur"); if (a) a.value = "";
+  const g = document.getElementById("searchInputGenre"); if (g) g.value = "";
+
+  if (!chosenKey) {
+    if (typeof afficherTout === "function") afficherTout();
     return;
   }
 
-  // Filtre
   searchActive = true;
-  const table = document.getElementById('tableLivres');
-  const countEl = document.getElementById('nombreTitres');
-  const noRes = document.getElementById('noResultMessage');
-  const showAll = document.getElementById('showAllButton');
+
+  const table = document.getElementById("tableLivres");
+  const countEl = document.getElementById("nombreTitres");
+  const noRes = document.getElementById("noResultMessage");
+  const showAll = document.getElementById("showAllButton");
 
   if (!table) return;
   while (table.rows.length > 1) table.deleteRow(1);
 
   let count = 0;
   allLivres.forEach(livre => {
-    const genresLivre = splitGenres(livre.data5 || '');
-    if (genresLivre.some(g => normalize(g) === normalize(chosen))) {
+    const genresLivre = splitGenres(livre.data5 || "")
+      .filter(isValidGenreLabel)
+      .map(normalizeKey);
+
+    if (genresLivre.includes(chosenKey)) {
       table.appendChild(createRow(livre));
       count++;
     }
@@ -2407,46 +2443,34 @@ function rechercherGenreDepuisSelect() {
 
   if (typeof initLazyLoad === "function") initLazyLoad();
   if (countEl) countEl.innerHTML = count + " titre(s) trouvé(s)";
-  if (noRes) noRes.style.display = count ? 'none' : 'block';
-  if (showAll) showAll.style.display = 'block';
+  if (noRes) noRes.style.display = count ? "none" : "block";
+  if (showAll) showAll.style.display = "block";
 }
 
 function resetGenreSelect() {
-  const sel = document.getElementById('genreSelect');
-  if (sel) sel.value = '';
-  if (typeof afficherTout === 'function') afficherTout();
+  const sel = document.getElementById("genreSelect");
+  if (sel) sel.value = "";
+  if (typeof afficherTout === "function") afficherTout();
 }
 
 /* Construire la liste au chargement */
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener("DOMContentLoaded", () => {
   buildGenreSelect();
 });
- </script>
 
-  <!-- ✅ petit bonus : la touche Entrée (si ton script original ne le fait pas déjà) -->
-<script>
-document.addEventListener('DOMContentLoaded', function () {
+/* Bonus : Enter sur les champs */
+document.addEventListener("DOMContentLoaded", function () {
   const bindEnter = (inputId, buttonId) => {
     const inp = document.getElementById(inputId);
     const btn = document.getElementById(buttonId);
     if (!inp || !btn) return;
-    inp.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') btn.click();
+    inp.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") btn.click();
     });
   };
 
-  bindEnter('searchInput', 'searchButton');
-  bindEnter('searchInputAuteur', 'searchButtonAuteur');
-  bindEnter('searchInputGenre', 'searchButtonGenre');
+  bindEnter("searchInput", "searchButton");
+  bindEnter("searchInputAuteur", "searchButtonAuteur");
+  bindEnter("searchInputGenre", "searchButtonGenre");
 });
 </script>
-
-</body>
-</html>
-
-
-
-
-
-
-
