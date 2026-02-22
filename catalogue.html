@@ -2480,11 +2480,12 @@ function rechercherGenreDepuisSelect() {
 
   let count = 0;
   allLivres.forEach(livre => {
-    const genresLivre = splitGenres(livre.data5 || "")
-      .filter(isValidGenreLabel)
-      .map(normalizeKey);
+const genresLivre = splitGenres(livre.data5 || "")
+  .filter(isValidGenreLabel)
+  .filter(lab => !looksTruncated(lab))
+  .map(lab => singularKey(normalizeKey(lab)));
 
-    if (genresLivre.includes(chosenKey)) {
+if (genresLivre.includes(chosenKey)) {
       table.appendChild(createRow(livre));
       count++;
     }
@@ -2524,6 +2525,7 @@ document.addEventListener("DOMContentLoaded", function () {
 </script>
   </body> 
 </html>
+
 
 
 
