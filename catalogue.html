@@ -2380,6 +2380,25 @@ function singularKey(key) {
   // normalisation très simple : enlève un 's' final (pas sur 'ss')
   return key.endsWith("s") && !key.endsWith("ss") ? key.slice(0, -1) : key;
 }
+function looksTruncated(label) {
+  const s = label.trim();
+
+  // finit par "&"
+  if (s.endsWith("&")) return true;
+
+  // finit par une lettre accentuée isolée ou syllabe suspecte
+  if (/(é|è|ê|à|ù|ô|î|ï|ü|ç)$/i.test(s) && s.length < 12) return true;
+
+  // si un autre genre plus long contient exactement celui-ci
+  // ex: "Litté" contenu dans "Littérature"
+  for (let other of allLivresGenresCache) {
+    if (other.length > s.length + 3 && other.includes(s)) {
+      return true;
+    }
+  }
+
+  return false;
+}
 function buildGenreSelect() {
   const sel = document.getElementById("genreSelect");
   if (!sel || !Array.isArray(allLivres)) return;
@@ -2390,7 +2409,7 @@ function buildGenreSelect() {
   // key normalisée -> label affiché
 const counts = new Map();   // key -> nb d'occurrences
 const labels = new Map();   // key -> meilleur libellé
-
+const allLivresGenresCache = Array.from(labels.values());
   allLivres.forEach(l => {
     const raw = l.data5 || "";
     splitGenres(raw).forEach(label => {
@@ -2425,9 +2444,14 @@ labels.forEach((label, key) => {
   }
 });
 
-const entries = Array.from(grouped.entries())
-  .filter(([, obj]) => obj.count >= 2) // garde seulement si apparaît >= 2
-  .sort((a, b) => a[1].label.localeCompare(b[1].label, "fr", { sensitivity: "base" }));
+const entries = Array.from(labels.entries())
+  .filter(([key, label]) =>
+    (counts.get(key) || 0) >= 2 &&
+    !looksTruncated(label)
+  )
+  .sort((a, b) =>
+    a[1].localeCompare(b[1], "fr", { sensitivity: "base" })
+  );
 
 entries.forEach(([key, obj]) => {
   const opt = document.createElement("option");
@@ -2510,6 +2534,7 @@ document.addEventListener("DOMContentLoaded", function () {
 </script>
   </body> 
 </html>
+
 
 
 
