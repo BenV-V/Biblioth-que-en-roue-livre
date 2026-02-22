@@ -46,7 +46,12 @@
           <span style="font-size:14px;">&#128269;</span>
         </button>
       </div>
-
+      
+<div class="search-grid">
+  <button id="resetButton" class="btn-secondary" onclick="resetRecherche()">
+    Réinitialiser
+  </button>
+</div>
       <div id="noResultMessage" style="display:none;font-weight:bold;">
         Pas de résultat
       </div>
@@ -125,7 +130,22 @@ function toggleDetails(id) {
     element.setAttribute('data-expanded', 'true');
   }
 }
+function resetRecherche() {
+  // vider les champs
+  const t = document.getElementById('searchInput');
+  const a = document.getElementById('searchInputAuteur');
+  const g = document.getElementById('searchInputGenre');
+  if (t) t.value = '';
+  if (a) a.value = '';
+  if (g) g.value = '';
 
+  // masquer messages/boutons liés à la recherche
+  const noRes = document.getElementById('noResultMessage');
+  if (noRes) noRes.style.display = 'none';
+
+  // revenir à la liste complète
+  if (typeof afficherTout === 'function') afficherTout();
+}
 /* ✅ clic sur l’entête “Titre / Auteur(s)” */
 let detailsVisible = false;
 function toggleAllDetails() {
@@ -2307,4 +2327,5 @@ document.addEventListener('DOMContentLoaded', function () {
 
 </body>
 </html>
+
 
